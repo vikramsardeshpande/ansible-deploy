@@ -1,0 +1,58 @@
+---
+
+- name: obtain redis and dependent rpms from mai01-build-02v
+  sudo: no
+  local_action: shell rsync -a {{ aduser }}@mai01-build-02v:/share/jenkins/thirdparty/{{ item }} {{ localcache }}/thirdparty
+  when: internal == 'yes'
+  with_items:
+  - gperftools-libs-2.0-11.el6.3.x86_64.rpm
+  - libunwind-1.1-2.el6.x86_64.rpm
+  - redis-2.6.16-1.el6.remi.x86_64.rpm
+
+
+- name: copy redis and dependent rpms to server
+  copy: src={{ localcache }}/thirdparty/{{ item }} dest={{ backup_root }}/thirdparty
+  with_items:
+  - gperftools-libs-2.0-11.el6.3.x86_64.rpm
+  - libunwind-1.1-2.el6.x86_64.rpm
+  - redis-2.6.16-1.el6.remi.x86_64.rpm
+
+- name: install libunwind (redis dependency)
+  yum: name={{ backup_root }}/thirdparty/libunwind-1.1-2.el6.x86_64.rpm
+       state=present
+
+- name: install gperftools-libs (redis dependency)
+  yum: name={{ backup_root }}/thirdparty/gperftools-libs-2.0-11.el6.3.x86_64.rpm
+       state=present
+
+- name: install redis
+  yum: name={{ backup_root }}/thirdparty/redis-2.6.16-1.el6.remi.x86_64.rpm
+       state=present
+
+- name: generate /etc/redis.conf
+  template: src=redis.conf.j2 dest=/etc/redis.conf mode=644
+
+- name: generate /etc/redis-sentinel.conf
+  template: src=redis-sentinel.conf.j2 dest=/etc/redis-sentinel.conf mode=644
+
+- name: copy /etc/init.d/redis
+  copy: src=redis.init dest=/etc/init.d/redis mode=755
+
+- name: copy /etc/init.d/redis-sentinel
+  copy: src=redis-sentinel.init dest=/etc/init.d/redis-sentinel mode=755
+
+- name: copy /etc/logrotate.d/redis
+  copy: src=redis.logrotate dest=/etc/logrotate.d/redis
+
+- name: copy /etc/logrotate.d/redis-sentinel
+  copy: src=redis-sentinel.logrotate dest=/etc/logrotate.d/redis-sentinel
+
+- name: enable/start redis service
+  service: name=redis enabled=yes state=restarted
+
+- name: register redis-sentinel as a service
+  command: /sbin/chkconfig --add redis-sentinel
+
+- name: enable/start redis-sentinel service
+  service: name=redis-sentinel enabled=yes state=restarted
+

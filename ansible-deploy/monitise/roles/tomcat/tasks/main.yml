@@ -1,0 +1,52 @@
+---
+# setup monitise tomcat service instance
+
+- name: setup {{ monitise_root }}/tomcat
+  file: path={{ monitise_root }}/tomcat state=directory owner=cm{{ instance }} mode=2750
+
+- name: setup /var/log/monitise/tomcat
+  file: path=/var/log/monitise/tomcat state=directory owner=cm{{ instance }} mode=2755
+
+- name: setup {{ monitise_root }}/tomcat/temp
+  file: path={{ monitise_root }}/tomcat/temp state=directory owner=cm{{ instance }} mode=2750
+
+- name: setup {{ monitise_root }}/tomcat/webapps
+  file: path={{ monitise_root }}/tomcat/webapps state=directory owner=cm{{ instance }} mode=2750
+
+- name: setup {{ monitise_root }}/tomcat/work
+  file: path={{ monitise_root }}/tomcat/work state=directory owner=cm{{ instance }} mode=2750
+
+- name: setup {{ monitise_root }}/tomcat/work/Catalina
+  file: path={{ monitise_root }}/tomcat/work/Catalina state=directory owner=cm{{ instance }} mode=2750
+
+- name: setup {{ monitise_root }}/tomcat/conf
+  file: path={{ monitise_root }}/tomcat/conf state=directory owner=cm{{ instance }} mode=2750
+
+- name: link {{ monitise_root }}/tomcat/logs to /var/log/monitise/tomcat
+  file: path={{ monitise_root }}/tomcat/logs src=/var/log/monitise/tomcat state=link
+
+# seed the contents of tomcat/conf only once
+- name: copy tomcat6 conf to instance directory
+  shell: /bin/cp -r /usr/share/tomcat6/conf/* {{ monitise_root }}/tomcat/conf
+         creates={{ monitise_root }}/tomcat/conf/web.xml
+
+- name: ensure tomcat/conf ownership
+  file: path={{ monitise_root }}/tomcat/conf state=directory recurse=yes owner=cm{{ instance }}
+
+- name: copy /etc/logrotate.d/tomcat
+  copy: src=tomcat.logrotate dest=/etc/logrotate.d/tomcat
+
+- name: copy {{ monitise_root }}/tomcat/conf/server.xml 
+  copy: src=server.xml dest={{ monitise_root }}/tomcat/conf backup=yes
+
+- name: generate /etc/init.d/tomcat
+  template: src=tomcat.init.j2 dest=/etc/init.d/tomcat mode=755
+
+- name: generate /etc/sysconfig/tomcat
+  template: src=tomcat.sysconfig.j2 dest=/etc/sysconfig/tomcat mode=644
+
+- name: register tomcat as a service
+  command: /sbin/chkconfig --add tomcat
+
+- name: enable tomcat service at boot
+  service: name=tomcat enabled=yes

@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<configuration xmlns="urn:hornetq" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:hornetq ../schemas/hornetq-users.xsd ">
+    <defaultuser name="guest" password="guest">
+        <role name="guest"/>
+    </defaultuser>
+    <user name="admin" password="clair">
+        <role name="admin"/>
+    </user>
+    <user name="clair" password="clair">
+        <role name="cmserver"/>
+    </user>
+    <user name="mme" password="mme">
+        <role name="mme"/>
+    </user>
+</configuration>

@@ -1,0 +1,5 @@
+---
+# our friend tomcat-native
+
+- name: install tomcat-native from EPEL
+  yum: name=tomcat-native state=present

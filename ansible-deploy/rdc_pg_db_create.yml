@@ -1,0 +1,26 @@
+--- 
+  - hosts: localhost  
+    connection: local 
+    gather_facts: no 
+    vars_files: 
+      - staging_vpc_info
+      - staging_sg_info
+    vars: 
+      oltpuser: oltpu
+      oltppass: oltppass
+      oltpdb: oltptestdb
+      oltpdata: testoltp
+      username: postgres_admin
+      password: postgres_pass
+      db_name: oltpdb
+    tasks: 
+    - name: Create test database oltptestdb instance 
+      shell: psql -h localhost -p 6100 -U {{ username }}  -d postgres -f postgres/CR_DB_PG.sql -v oltpdb={{ oltpdb }} -v oltpuser={{ oltpuser }} -v oltppass=\'"{{ oltppass }}"\'
+    - name: Create schema for database instance 
+      shell: psql -h localhost -p 6100 -U {{ username }}  -d {{ oltpdb }} -f postgres/CREATE_OBJECT_PS.sql -d {{ oltpdb }} -U {{ oltpuser }}
+    - name: Insert initial data to database instance 
+      shell: psql -h localhost -p 6100 -U {{ username }}  -d {{ oltpdb }} -f postgres/InitialData.sql -d {{ oltpdb }} -U {{ oltpuser }}
+    - name: Insert AlertsInitialData to database instance 
+      shell: psql -h localhost -p 6100 -U {{ username }}  -d {{ oltpdb }} -f postgres/AlertsInitialData.sql -d {{ oltpdb }} -U {{ oltpuser }}
+    - name:  insert CarrierInitialData to database instance 
+      shell: psql -h localhost -p 6100 -U {{ username }}  -d {{ oltpdb }} -f postgres/CarrierInitialData.sql -d {{ oltpdb }} -U {{ oltpuser }}

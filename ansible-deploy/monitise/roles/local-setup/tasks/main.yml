@@ -1,0 +1,14 @@
+---
+# ensure our local system is properly setup
+
+- name: ensure {{ localcache }} exists
+  sudo: no
+  local_action: file path={{ localcache }} state=directory owner={{ ansible_ssh_user }} mode=0755
+
+- name: ensure {{ localcache }} subfolders exist
+  sudo: no
+  local_action: file path={{ localcache }}/{{ item }} state=directory owner={{ ansible_ssh_user }} mode=0755
+  with_items:
+  - COREBuilds
+  - PSBuilds
+  - thirdparty

@@ -1,0 +1,9 @@
+---
+# Deploy MVP Server instance with PS customizations
+
+ - hosts: mvp
+   user: cm{{ instance }}
+   vars_files:
+   - ../local.yml
+   roles:
+   - { role: daily-log-backup, tags: ['daily-log-backup'] }

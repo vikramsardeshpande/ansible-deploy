@@ -1,0 +1,19 @@
+--- 
+  - hosts: localhost 
+    connection: local 
+    gather_facts: no 
+    vars_files: 
+      - staging_vpc_info 
+      - staging_app_ec2_info
+    vars: 
+      region: us-east-1 
+      prefix: staging  
+    tasks: 
+      - name: stop ec2 app instance  
+        ec2: 
+          region: "{{ region }}" 
+#          instance_tags: '{Name":"{{ prefix }}_app"}'  
+          instance_ids: "{{ staging_app }}"
+          vpc_subnet_id: "{{ staging_subnet_private_0 }}"
+          state: absent
+          wait: True 

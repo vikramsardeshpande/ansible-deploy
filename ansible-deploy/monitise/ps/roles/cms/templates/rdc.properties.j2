@@ -1,0 +1,84 @@
+#for RDC connector : This needs to be added in cmserver and configured according to env filters
+ensenta.acct.no.key=ensentaAcctNbr
+device.id.length=20
+ensenta.resubmit.codes=E500
+#Ensenta session time in milliseconds
+rdc.session.timeout=900000
+
+rdc.start.session.soap.action=http://ensenta.com/ECPartnerDepositRequest/SingleSignon/PartnerSSORequest/IPartnerSSORequest/StartSession
+rdc.upload.check.image.soap.action=http://ensenta.com/ECPartnerDepositRequest/IPartnerDepositRequest/UploadCheckImage
+rdc.evaluate.deposit.soap.action=http://ensenta.com/ECPartnerDepositRequest/IPartnerDepositRequest/EvaluateDeposit
+rdc.do.deposit.soap.action=http://ensenta.com/ECPartnerDepositRequest/IPartnerDepositRequest/DoDepositTransaction
+rdc.end.session.soap.action=http://ensenta.com/ECPartnerDepositRequest/IPartnerDepositRequest/EndSession
+rdc.start.session.back.end.url={{ rdc_start_session_back_end_url }}
+rdc.deposit.check.back.end.url={{ rdc_deposit_check_back_end_url }}
+
+router.url={{ router_url }}
+router.system.id=BOT_WS_USER
+router.system.password=BOT_WS_PW
+router.csr.id=BOT_WS_USER
+router.csr.password=BOT_WS_PW
+rdc.partner.id={{ rdc_partner_id }}
+
+rdc.client.certificate.format={{ rdc_client_certificate_format }}
+rdc.client.certificate.location={{ rdc_client_certificate_location }}
+rdc.client.certificate.password={{ rdc_client_certificate_password }}
+
+########################################################################################################################################################
+#### Ensenta Error Management
+#### Format:
+#### Error_Key=<isError>,<isPassthrough>,<whichErrorMessage>
+#### Error_key=API_Name.SubAPI(optional).Error_Code
+#### isError=ERROR for Error, RESUBMIT for Resubmission
+#### isPassThrough=ERROR for ClairMail_Error_Key, PASSTHROUGH for Passthrough
+#### whichErrorMessage= Error key name for ClairMail_Error_key or Error node name for Passthrough 
+####(Possible Values: 
+#### Error case: message.checkdeposit.errors
+#### Passthrough case: /uploadCheckImageResponse/uploadCheckImageResult/localizedMessageText
+####
+#### Example 1:
+#### uploadCheckImage.Front.E35=RESUBMIT,ERROR,label.check.front.recapture
+#### Significance: When E35 error code is received during uploadCheckImage for
+#### front image, its a resubmission with ClairMailErrorKey label.check.front.recapture
+#### 
+#### Please note that any newly introduced Error key needs to be added in MWeb as well
+#########################################################################################################################################################
+StartSession.E12=ERROR,ERROR,content.check.eligibility
+StartSession.E77=ERROR,ERROR,content.check.eligibility
+StartSession.E78=ERROR,ERROR,content.check.eligibility
+StartSession.E99=ERROR,ERROR,content.check.eligibility
+ 
+UploadCheckImage.Front.E35=ERROR,ERROR,message.checkdeposit.front.image.processing.error
+UploadCheckImage.Front.E99=RESUBMIT,ERROR,label.check.recapture.front.image
+ 
+UploadCheckImage.Back.E35=ERROR,ERROR,message.checkdeposit.back.image.processing.error
+UploadCheckImage.Back.E99=RESUBMIT,ERROR,label.check.recapture.back.image
+ 
+EvaluateDeposit.E00=RESUBMIT,PASSTHROUGH,/evaluateDepositResponse/evaluateDepositResult/depositRiskFactors/
+EvaluateDeposit.E35=ERROR,ERROR,message.checkdeposit.evaluatedeposit.policy.deposit.rejected
+EvaluateDeposit.E99=ERROR,ERROR,message.checkdeposit.evaluatedeposit.infonotfound.deposit.rejected
+EvaluateDeposit.E500=ERROR,ERROR,label.check.deposit.rejected
+EvaluateDeposit.EL1=ERROR,ERROR,label.over.daily.amount
+EvaluateDeposit.EL2=ERROR,ERROR,label.over.daily.transaction
+EvaluateDeposit.EL3=ERROR,ERROR,label.over.daily.businessday.amount
+EvaluateDeposit.EL4=ERROR,ERROR,label.over.daily.businessday.transaction
+EvaluateDeposit.EL5=ERROR,ERROR,message.checkdeposit.over.weekly.amount
+EvaluateDeposit.EL6=ERROR,ERROR,message.checkdeposit.over.weekly.transactions
+EvaluateDeposit.EL7=ERROR,ERROR,message.checkdeposit.over.monthly.amount
+EvaluateDeposit.EL8=ERROR,ERROR,message.checkdeposit.over.monthly.transaction
+
+DoDepositCheck.E35=ERROR,ERROR,message.checkdeposit.dodeposit.policy.deposit.rejected
+DoDepositCheck.E99=ERROR,ERROR,message.checkdeposit.dodeposit.unable.to.post
+DoDepositCheck.E500=ERROR,ERROR,label.check.deposit.rejected
+DoDepositCheck.EL1=ERROR,ERROR,label.over.daily.amount
+DoDepositCheck.EL2=ERROR,ERROR,label.over.daily.transaction
+DoDepositCheck.EL3=ERROR,ERROR,label.over.daily.businessday.amount
+DoDepositCheck.EL4=ERROR,ERROR,label.over.daily.businessday.transaction
+DoDepositCheck.EL5=ERROR,ERROR,message.checkdeposit.over.weekly.amount
+DoDepositCheck.EL6=ERROR,ERROR,message.checkdeposit.over.weekly.transactions
+DoDepositCheck.EL7=ERROR,ERROR,message.checkdeposit.over.monthly.amount
+DoDepositCheck.EL8=ERROR,ERROR,message.checkdeposit.over.monthly.transaction
+DoDepositCheck.E33=ERROR,ERROR,message.checkdeposit.daily.limit.exceeded
+
+rdc.connector.error.key.account.inelligible=ERROR,ERROR,message.rdc.account.inelligible
+rdc.ensenta.generic.error=ERROR,ERROR,message.checkdeposit.rdc.errors

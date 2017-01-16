@@ -1,0 +1,42 @@
+--- 
+  - hosts: localhost  
+    connection: local 
+    gather_facts: no 
+    vars_files: 
+      - staging_vpc_info
+      - staging_sg_info
+    vars: 
+      prefix: staging 
+      region: us-east-1
+      rds_instance_name: oltpdb-pg
+      db_name: oltpdb
+      username: postgres_admin
+      password: postgres_pass
+      db_subnet: test-db
+    tasks: 
+    - name: creat subnet group for RDS instance 
+      rds_subnet_group: 
+        name: "{{ db_subnet }}"
+        region: "{{ region }}"
+        subnets: 
+            - "{{ staging_subnet_database_0 }}"
+            - "{{ staging_subnet_database_1 }}"
+        state: present
+        description: subnet group for RDS instance
+    - name: Create Posgres DB instance  
+      rds: 
+        command: create  
+        instance_name: "{{ rds_instance_name }}"
+        db_engine: postgres
+        instance_type: db.t2.micro
+        db_name: "{{ db_name }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        wait: yes
+        subnet: "{{ db_subnet }}"
+        publicly_accessible: no
+        region: "{{ region }}" 
+        vpc_security_groups: "{{ staging_sg_database }}"
+        size: 5
+        wait: true
+        wait_timeout: 600

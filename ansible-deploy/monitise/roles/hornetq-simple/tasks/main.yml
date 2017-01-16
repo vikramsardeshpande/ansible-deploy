@@ -1,0 +1,23 @@
+---
+# write stand-alone non-clustered hornetq configuration files
+
+- name: copy hornetq-beans.xml
+  copy: src=hornetq-beans.xml dest={{ monitise_root }}/hornetq owner=cm{{ instance }}
+
+- name: copy hornetq-configuration.xml
+  copy: src=hornetq-configuration.xml dest={{ monitise_root }}/hornetq owner=cm{{ instance }}
+
+- name: copy hornetq-jms.xml
+  copy: src=hornetq-jms.xml dest={{ monitise_root }}/hornetq owner=cm{{ instance }}
+
+- name: copy hornetq-users.xml
+  copy: src=hornetq-users.xml dest={{ monitise_root }}/hornetq owner=cm{{ instance }}
+
+- name: copy jndi.properties
+  copy: src=jndi.properties dest={{ monitise_root }}/hornetq owner=cm{{ instance }}
+
+- name: generate logging.properties
+  template: src=logging.properties.j2 dest={{ monitise_root }}/hornetq/logging.properties owner=cm{{ instance }}
+
+- name: restart hornetq service
+  service: name=hornetq state=restarted

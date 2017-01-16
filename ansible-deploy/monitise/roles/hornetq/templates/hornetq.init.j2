@@ -1,0 +1,121 @@
+#!/bin/bash
+#
+# chkconfig: - 73 18
+#
+### BEGIN INIT INFO
+# Provides: hornetq
+# Required-Start: $network $syslog
+# Required-Stop: $network $syslog
+# Default-Start:
+# Default-Stop:
+# Short-Description: start and stop hornetq
+### END INIT INFO
+
+# Source function library.
+. /etc/init.d/functions
+
+NAME="$(basename $0)"
+RUNUSER=cm{{ instance }}
+HORNETQ_HOME="/opt/hornetq-2.2.14.Final"
+CONFIG_DIR="{{ monitise_root }}/hornetq"
+DATA_DIR="{{ hqdata_root }}"
+
+if [ -x "/sbin/runuser" ]; then
+	SU="/sbin/runuser"
+else
+	SU="/bin/su"
+fi
+
+hqstart() {
+	export CLASSPATH=$CONFIG_DIR:$HORNETQ_HOME/schemas/
+	for i in `ls $HORNETQ_HOME/lib/*.jar`; do
+		CLASSPATH=$i:$CLASSPATH
+	done
+	#export CLUSTER_PROPS="-Djnp.port=1099 -Djnp.rmiPort=1098 -Djnp.host=localhost -Dhornetq.remoting.netty.host=localhost -Dhornetq.remoting.netty.port=5445"
+	JMX_PROPS="-Djava.rmi.server.hostname=localhost -Dcom.sun.management.jmxremote.port=9000 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false"
+	export HORNETQ_JVM_ARGS="$CLUSTER_PROPS -XX:+UseParallelGC -XX:+AggressiveOpts -XX:+UseFastAccessorMethods -Xms256M -Xmx256M -Dhornetq.config.dir=$CONFIG_DIR -Djava.util.logging.config.file=$CONFIG_DIR/logging.properties -Djava.library.path=$HORNETQ_HOME -Ddata.dir=$DATA_DIR"
+	$SU -s /bin/sh -c "nohup java $HORNETQ_JVM_ARGS -classpath $CLASSPATH $JMX_PROPS org.hornetq.integration.bootstrap.HornetQBootstrapServer $CONFIG_DIR/hornetq-beans.xml > /dev/null 2>&1 &" $RUNUSER
+	return 0
+}
+
+hqstatus() {
+  	pid=$(pgrep -u cm{{ instance }} -f hornetq\.config\.dir)
+	if [ "x$pid" = "x" ]; then
+		return 0
+	else
+		return 1
+	fi
+}
+
+case "$1" in
+  start)
+        echo -n $"Starting $NAME service: "
+  	hqstatus
+	if [ $? -eq 1 ]; then
+		echo_failure
+		echo
+		echo "$NAME already running ($pid)"
+		exit 0
+	fi
+	sleep 1
+	hqstart
+        echo_success
+	echo
+        exit 0
+        ;;
+  stop)
+	echo -n $"Stopping $NAME service: "
+  	hqstatus
+	if [ $? -eq 0 ]; then
+		echo_failure
+		echo
+		echo "$NAME is not running"
+		exit 0
+	else
+		kill $pid
+		sleep 3
+
+	fi
+	hqstatus
+	if [ $? -eq 1 ]; then
+		echo_failure
+		echo
+		echo "$NAME is still running!"
+		exit 1
+	else
+		echo_success
+		echo
+		exit 0
+	fi
+        ;;
+  force-stop)
+        echo -n $"Killing $NAME service: "
+	hqstatus
+	if [ $? -eq 0 ]; then
+		echo_failure
+		echo
+		echo "No process to kill"
+		exit 0
+	else
+		kill -9 $pid
+		echo_success
+		echo
+	fi
+	exit 0
+	;;
+  status)
+  	hqstatus
+	if [ $? -eq 0 ]; then
+		echo "$NAME is stopped"
+		exit 3
+	else
+		echo "$NAME is running (${pid})"
+	fi
+	exit 0
+	;;
+  *)
+        echo "Usage: hornetq {start|stop|status|force-stop}"
+        exit 1
+esac
+
+exit 0

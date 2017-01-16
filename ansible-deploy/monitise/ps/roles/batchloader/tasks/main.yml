@@ -1,0 +1,69 @@
+---
+# Deploy BatchLoaderService base + solution package
+#
+- name: "{{ monitise_root }}/tomcat/webapps/BatchLoaderService exist or not"
+  stat: path={{ monitise_root }}/tomcat/webapps/BatchLoaderService
+  register: check_path_BatchLoaderService1
+  when: backup_option
+
+- name: "{{ monitise_root }}/tomcat/webapps/BatchLoaderService status"
+  debug: msg="Skipping the BatchLoaderService backup"
+  when:  backup_option and check_path_BatchLoaderService1.stat.exists==false
+
+- name: backup old BatchLoaderService install
+  shell: zip -r  {{ backup_applications }}/BatchLoaderService-backup{{ ansible_date_time['date'] + '_' + ansible_date_time['time'].replace(':', '_') }}.zip {{ monitise_root }}/tomcat/webapps/BatchLoaderService*
+        chdir={{ monitise_root }}/tomcat/webapps
+  when: backup_option and check_path_BatchLoaderService1.stat.exists
+
+- name: "create {{ script_temp_dir }}"
+  file: path={{ script_temp_dir }} state=directory mode=755
+
+- name: "create {{ script_temp_dir }} directories"
+  file: path={{ script_temp_dir }}/{{ item }} state=directory mode=755
+  with_items:
+  - BatchLoaderService
+  - BatchLoaderService-solution
+
+- name: extract BatchLoaderService.war file 
+  shell: unzip -o {{ backup_root }}/COREBuilds/{{ core_branch }}/{{ core_build }}/batch-file-loader/service/{{ BatchLoaderService_base_package }}
+         chdir={{ script_temp_dir }}/BatchLoaderService
+
+- name: checking BatchLoaderService solution package exist or not
+  stat: path={{ backup_root }}/PSBuilds/{{ psbuild_number }}/{{ BatchLoaderService_solution_package }}
+  register: check_path_BatchLoaderService2
+  when: deploy_solution
+
+- name: BatchLoaderService solution package status
+  debug: msg="BatchLoaderService solution package not found"
+  when:  deploy_solution and  check_path_BatchLoaderService2.stat.exists==false
+
+- name: unzip the solution package
+  shell: unzip -o {{ backup_root }}/PSBuilds/{{ psbuild_number }}/{{ BatchLoaderService_solution_package }} 
+         chdir={{ script_temp_dir }}/BatchLoaderService-solution
+  when: deploy_solution and check_path_BatchLoaderService2.stat.exists
+
+- name: overlay BatchLoaderService solution package
+  shell: /bin/cp -pbr --suffix=.bkp {{ script_temp_dir }}/BatchLoaderService-solution/BatchLoaderService/* {{ script_temp_dir }}/BatchLoaderService/
+  when: deploy_solution and check_path_BatchLoaderService2.stat.exists
+
+- name: generate connection.properites file 
+  template: src=connection.properties.j2 dest={{ script_temp_dir }}/BatchLoaderService/WEB-INF/classes/connection.properties backup=yes
+
+- name: generate  batch-file-loader.properties file 
+  template: src=batch-file-loader.properties.j2 dest={{ script_temp_dir }}/BatchLoaderService/WEB-INF/classes/batch-file-loader.properties backup=yes
+
+- name: copy log4j.xml
+  copy: src=log4j.xml dest={{ script_temp_dir }}/BatchLoaderService/WEB-INF/classes backup=yes
+
+- name: create new BatchLoaderService war file 
+  shell: zip -r ../BatchLoaderService.war  META-INF/MANIFEST.MF *
+         chdir={{ script_temp_dir }}/BatchLoaderService
+
+- name: delete tomcat work directory
+  shell: rm -rf {{ monitise_root }}/tomcat/work/Catalina/localhost/BatchLoaderService {{ monitise_root }}/tomcat/webapps/BatchLoaderService {{ monitise_root }}/tomcat/webapps/BatchLoaderService.war 
+
+- name: deploy new BatchLoaderService 
+  shell: cp {{ script_temp_dir }}/BatchLoaderService.war {{ monitise_root }}/tomcat/webapps
+
+- name: remove temp BatchLoaderService directory
+  shell: rm -rf {{ script_temp_dir }}/BatchLoaderService*  

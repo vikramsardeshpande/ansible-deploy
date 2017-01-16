@@ -1,0 +1,25 @@
+---
+# Deploy MVP Server instance with PS customizations
+
+- hosts: mvp-frontend
+#  user: cm{{ instance }}
+  become: yes
+  vars_files:
+  - ../local.yml
+  pre_tasks:
+  - name: stop tomcat service 
+    service: name=tomcat state=stopped 
+    sudo: yes
+    tags: ['mweb', 'enrollment', 'webclient', 'restapi' ]
+  roles: 
+#  - { role: getcorebuild, tags: ['getcorebuild'] }
+#  - { role: getpsbuild, tags: ['getpsbuild'] }
+  - { role: mweb, tags: ['mweb'] }
+#  - { role: webclient, tags: ['webclient'] }
+  - { role: restapi, tags: ['restapi'] }
+#  - { role: enrollment, tags: ['enrollment'] }
+  post_tasks:
+  - name: start tomcat service 
+    service: name=tomcat state=started
+    sudo: yes
+    tags: ['mweb', 'enrollment', 'webclient', 'restapi' ]

@@ -1,0 +1,16 @@
+---
+# prepare a backend system
+
+- hosts: mvp-backend
+#  user: "{{ install_user }}"
+#  sudo: yes
+  become: yes
+  vars_files:
+  - local.yml
+  roles:
+  - { role: backend, tags: ['backend'] }
+#  - { role: redis, tags: ['redis'] }
+  - { role: hornetq, tags: ['hornetq'] }
+  - { role: hornetq-simple, tags: ['hornetq-simple'] }
+#  - { role: disco, tags: ['disco'] }
+  - { role: smppsim, tags: ['smppsim'] }

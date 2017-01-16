@@ -1,0 +1,42 @@
+---
+# Install bootstrap repository for Spacewalk server in San Rafael.
+#
+# NOTE: This is only really needed for systems in the office that are NOT being
+# remotely managed by IT in order to take advantage of the their Spacewalk
+# server and avoid wasting bandwidth.  If the system is already being remotely
+# managed by IT, this playbook won't need to do anything.
+
+- name: add IT bootstrap repository
+  copy: src=bootstrap.repo dest=/etc/yum.repos.d/bootstrap.repo
+
+- name: copy EPEL GPG KEY
+  copy: src=RPM-GPG-KEY-EPEL-6 dest={{ backup_root }}
+
+- name: copy IT GPG KEY
+  copy: src=RPM-GPG-KEY-it dest={{ backup_root }}
+
+- name: copy puppetlabs GPG KEY
+  copy: src=RPM-GPG-KEY-puppetlabs dest={{ backup_root }}
+
+- name: copy spacewalk GPG KEY
+  copy: src=RPM-GPG-KEY-spacewalk-2012 dest={{ backup_root }}
+
+- name: install EPEL GPG KEY
+  rpm_key: state=present key={{ backup_root }}/RPM-GPG-KEY-EPEL-6
+
+- name: install IT GPG KEY
+  rpm_key: state=present key={{ backup_root }}/RPM-GPG-KEY-it
+
+- name: install puppetlabs GPG KEY
+  rpm_key: state=present key={{ backup_root }}/RPM-GPG-KEY-puppetlabs
+
+- name: install spacewalk GPG KEY
+  rpm_key: state=present key={{ backup_root }}/RPM-GPG-KEY-spacewalk-2012
+
+- name: copy RHN-ORG-TRUSTED-SSL-CERT
+  copy: src=RHN-ORG-TRUSTED-SSL-CERT dest=/usr/share/rhn
+
+- name: make sure up2date server URL is correct
+  lineinfile: dest=/etc/sysconfig/rhn/up2date
+              line="serverURL=https://mai02-swalk-01v.clairmail.local/XMLRPC"
+              regexp="^serverUrl=" state=present

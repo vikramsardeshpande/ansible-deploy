@@ -1,0 +1,79 @@
+#!/bin/bash
+
+# enabled extended globbing
+shopt -s extglob
+
+# number of days to keep log backups
+DAYS=15
+
+# logs to backup (update with your logs to backup)
+LOG[0]=/var/log/monitise/tomcat/banking-rest-api/banking-rest-api.log
+LOG[1]=/var/log/monitise/tomcat/banking-rest-api/banking-rest-api-security.log
+LOG[2]=/var/log/monitise/tomcat/mobile/clairmail-mobile.log
+LOG[3]=/var/log/monitise/tomcat/mobile/clairmail-error.log
+LOG[4]=/var/log/monitise/tomcat/mobile/clairmail-security.log
+LOG[5]=/var/log/monitise/tomcat/mobile/clairmail-deviceid.log
+LOG[6]=/var/log/monitise/tomcat/enrollment.log
+
+# yesterdays date (MM-DD)
+P_DAY=`date --date="1 days ago" +"%Y-%m-%d"`
+
+for instance in {{ instance }}; do
+
+        # ensure backup directory {{ backup_logs }} exists
+        if [[ ! -d {{ backup_logs }}/{{ instance }} ]]; then
+                mkdir -p {{ backup_logs }}/{{ instance }}
+        fi
+
+        if [[ $? -ne 0 ]]; then
+                echo "** unable to create backup directory {{ backup_logs }}, exitting"
+                exit 1
+        fi
+
+        for log in "${LOG[@]}"
+        do
+                found=0
+                # logs are sorted by mod time from newest to oldest
+                for x in $log.$P_DAY-[0-9][0-9]?(.gz); do
+                        if [[ -f $x ]]; then
+                                found=1
+                                # move the log file to backup directory prior to archiving
+                                mv $x {{ backup_logs }}/{{ instance }}
+                        fi
+                done
+
+                # check that the current $log file doesn't contain data for today
+                # can happen if there had been no writting to the file for a
+                # certain amount of time
+                l_message=`tail -1 $log | grep "^$P_DAY"`
+                if [[ ! -z $l_message ]]; then
+                        # find out the hour
+                        found=1
+                        l_hour=`echo $l_message | awk '{print $2}' | awk -F: '{print $1}'`
+                        cp -p $log {{ backup_logs }}/{{ instance }}/${log##*/}.$P_DAY-$l_hour
+                fi
+
+
+                # if we actually found some logs for today
+                if [[ $found -ne 0 ]]; then
+                        # now zip up the file to conserve space
+                        cd {{ backup_logs }}/{{ instance }}
+                        tar cfjv ${log##*/}.$P_DAY.tar.bz2 ${log##*/}.$P_DAY-[0-9][0-9]?(.gz)
+
+                        # remove unzipped archives
+                        rm -rf ${log##*/}.$P_DAY-[0-9][0-9]?(.gz) &> /dev/null
+                fi
+
+                # look for any log files from days other than today
+                T_DAY=`date +"%Y-%m-%d"`
+                for orphan in $log.!("$T_DAY"-*)?(.gz); do
+                        if [[ -f $orphan ]]; then
+                                echo "** found orphaned log file $orphan, removing"
+                                rm -f $orphan
+                        fi
+                done
+        done
+done
+
+# delete log backups older than $DAYS
+find {{ backup_logs }}/{{ instance }}/*.bz2 -type f -mtime +$DAYS -exec rm {} \;

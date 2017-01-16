@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<configuration scan="true" debug="false">
+
+    <!-- ================================= -->
+    <!-- Preserve messages in a local file -->
+    <!-- ================================= -->
+
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <File>${catalina.base}/logs/banking-rest-api/banking-rest-api.log</File>
+
+	<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+		<FileNamePattern>${catalina.base}/logs/banking-rest-api/banking-rest-api.log.%d{yyyy-MM-dd-HH}.gz</FileNamePattern>
+	</rollingPolicy>
+    
+        <encoder>
+            <Pattern>%d{ISO8601} [%t] %-5p %X{externalId} [%c:%M] %m%n</Pattern>
+        </encoder>
+    </appender>
+    
+    
+    <!-- ========================================== -->
+    <!-- Preserve security messages in a local file -->
+    <!-- ========================================== -->
+
+    <appender name="SECURITY_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    	<filter class="ch.qos.logback.core.filter.EvaluatorFilter">
+	    	<evaluator class="ch.qos.logback.classic.boolex.OnMarkerEvaluator">
+	      		<marker>SECURITY_MARKER</marker>	      
+	    	</evaluator>
+	    	<OnMismatch>DENY</OnMismatch>
+      		<OnMatch>ACCEPT</OnMatch>
+	    </filter>
+        <File>${catalina.base}/logs/banking-rest-api/banking-rest-api-security.log</File>
+
+       <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+                <FileNamePattern>${catalina.base}/logs/banking-rest-api/banking-rest-api-security.log.%d{yyyy-MM-dd-HH}.gz</FileNamePattern>
+        </rollingPolicy>
+
+        <encoder>
+            <Pattern>%d{ISO8601} [%t] %-5p %X{externalId} [%c:%M] %m%n</Pattern>
+        </encoder>
+    </appender>
+    
+    
+    
+
+    <!-- ============================== -->
+    <!-- Append messages to the console -->
+    <!-- ============================== -->
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <Pattern>%t %d{ISO8601} %-5p %X{externalId} [%c:%M] %m%n</Pattern>
+        </encoder>
+    </appender>
+
+    <!-- ================ -->
+    <!-- Limit categories -->
+    <!-- ================ -->
+
+    <logger name="com.clairmail.api.rest.banking" level="TRACE" />
+    
+    <logger name="com.clairmail.passprovider" level="INFO" />
+
+    <!-- =========================== -->
+    <!-- Log categories for RestEasy -->
+    <!-- =========================== -->
+    
+    <logger name="org.jboss.resteasy.core" level="ERROR" />                  <!-- Logs all activity by the core RESTEasy implementation -->
+    <logger name="org.jboss.resteasy.plugins.providers" level="ERROR" />     <!-- Logs all activity by RESTEasy entity providers -->
+    <logger name="org.jboss.resteasy.plugins.server" level="ERROR" />        <!-- Logs all activity by the RESTEasy server implementation. -->
+    <logger name="org.jboss.resteasy.specimpl" level="ERROR" />              <!-- Logs all activity by JAX-RS implementing classes -->
+    <logger name="org.jboss.resteasy.mock" level="ERROR" />                  <!-- Logs all activity by the RESTEasy mock framework -->
+    <logger name="org.jboss.resteasy.springmvc" level="WARN" />              <!-- RestEasy maps all logging to error levels to warn levels. This needs to be left at warn to see errors printed. See org.jboss.resteasy.logging.impl.Log4jLogger -->
+    <logger name="org.springframework.web.servlet" level="DEBUG" />          <!-- This logs all requests coming into the Spring DispatcherServlet. Logging at DEBUG will show all requests but be a little verbose. Change to ERROR level in production -->
+    
+    <!-- ======================= -->
+    <!-- Setup the Root category -->
+    <!-- ======================= -->
+
+    <root level="ERROR">
+        <appender-ref ref="FILE" />
+        <appender-ref ref="SECURITY_FILE" />
+    </root>
+    
+</configuration>

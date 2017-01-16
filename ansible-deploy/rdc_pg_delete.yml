@@ -1,0 +1,28 @@
+--- 
+  - hosts: localhost  
+    connection: local 
+    gather_facts: no 
+    vars_files: 
+      - staging_vpc_info
+      - staging_sg_info
+    vars: 
+      prefix: staging 
+      region: us-east-1
+      rds_instance_name: oltpdb-pg
+      db_name: oltpdb
+      username: postgres_admin
+      password: postgres_pass
+      db_subnet: test-db
+    tasks: 
+    - name: delete Posgres DB instance  
+      rds: 
+        region: "{{ region }}"
+        command: delete
+        instance_name: "{{ rds_instance_name }}"
+        wait: yes
+        wait_timeout: 600
+    - name: delete subnet group for RDS instance 
+      rds_subnet_group: 
+        name: "{{ db_subnet }}"
+        region: "{{ region }}"
+        state: absent

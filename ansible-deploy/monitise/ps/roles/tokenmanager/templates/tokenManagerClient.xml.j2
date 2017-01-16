@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:cxf="http://cxf.apache.org/core" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:context="http://www.springframework.org/schema/context"
+    xmlns:sec="http://cxf.apache.org/configuration/security" xmlns:util="http://www.springframework.org/schema/util"
+    xmlns:p="http://www.springframework.org/schema/p" xmlns:jaxws="http://cxf.apache.org/jaxws"
+    xmlns:jaxrs="http://cxf.apache.org/jaxrs"
+    xsi:schemaLocation="
+       http://www.springframework.org/schema/beans      http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://cxf.apache.org/core                       http://cxf.apache.org/schemas/core.xsd
+       http://www.springframework.org/schema/context    http://www.springframework.org/schema/context/spring-context.xsd
+       http://cxf.apache.org/configuration/security     http://cxf.apache.org/schemas/configuration/security.xsd       
+       http://www.springframework.org/schema/util       http://www.springframework.org/schema/util/spring-util.xsd
+       http://cxf.apache.org/jaxws                      http://cxf.apache.org/schemas/jaxws.xsd
+       http://cxf.apache.org/jaxrs                      http://cxf.apache.org/schemas/jaxrs.xsd">
+    <!-- the HashMap implementation of the SSO token manager, not recommended 
+        for production -->
+    <bean id="tokenMgrHashMapImpl" class="com.clairmail.service.token.TokenManagerHashMapImpl"
+        scope="singleton">
+        <property name="defaultLifetime" value="60000" />
+        <property name="errorMessagePropertiesFilename" value="tokenManagerErrors.properties" />
+        <property name="usingExtIdAndUsername" value="true" />
+        <property name="forcingExpireOldestSession" value="true" />
+        <property name="baseRetryPeriodMillis" value="1000" />
+    </bean>
+
+    <!-- each successive retry will happen after either constant 'baseRetryPeriodMillis' 
+        delay or square or cube of retry number times 'baseRetryPeriodMillis' -->
+    <bean id="constWaiter" class="com.clairmail.service.token.ConstantWaitFn" />
+    <bean id="squaredWaiter" class="com.clairmail.service.token.SquaredWaitFn" />
+    <bean id="cubedWaiter" class="com.clairmail.service.token.CubedWaitFn" />
+
+    <!-- the Redis implementation of the SSO token manager -->
+    <bean id="tokenMgrJedisImpl" class="com.clairmail.service.token.TokenManagerJedisImpl"
+        scope="singleton">
+
+        <property name="retryWaitFn" ref="constWaiter" />
+        <property name="verbose" value="false" /> <!-- prints exception stack traces if true -->
+        <property name="clearSessionsOnServerRestart" value="false" />
+        <!-- length of time in millis that a token exists in the redis master -->
+        <property name="defaultLifetime" value="240000" />
+
+        <!-- multiple sentinels are optional, but specifying multiple sentinel 
+            allows for fault-tolerance with them as well as the regular redis servers -->
+        <property name="sentinelUrls">
+            <set>
+                <value>{{ server_http_address }}:26379</value>
+            </set>
+        </property>
+
+        <!-- properties file for internationalization of error messages -->
+        <property name="errorMessagePropertiesFilename" value="tokenManagerErrors.properties" />
+
+        <!-- If usingExtIdAndUsername is true, tokens are associated with both
+            username and external id; if false, tokens are associated with just the external 
+            id -->
+        <property name="usingExtIdAndUsername" value="true" />
+        <property name="forcingExpireOldestSession" value="true" />
+
+        <!-- password for redis master/slave servers; redis sentinels have no password -->
+        <property name="redisPassword" value="f00bar" />
+
+    </bean>
+
+    <!-- tokenManagement is the aspect posing as a spring bean that glues, via the 
+        TokenManagerInterceptor, the selected implementation (either redis or hashmap) to the java 
+        stub generated from the sso.wsdl by wsdl2java, so that the jax-rs (rest service) 
+        and jax-ws (web service) calls are correctly routed to the implementation 
+        The rest and web service endpoints have different prefixes 
+            TokenManager/rs/{action}/{params} 
+        for rest 
+            TokenManager/ws 
+        for web service 
+        The rest endpoint will return xml by default; add a '.json' suffix to 
+        the rest url to return JSON 
+     -->
+    <bean id="tokenManagement" class="com.clairmail.service.token.aspects.TokenManagement">
+        <property name="tokenManager" ref="tokenMgrJedisImpl" />
+	<!-- <property name="tokenManager" ref="tokenMgrHashMapImpl" /> -->
+        
+        <!-- If rest is secured beyond web.xml security constraints (e.g. mandating 
+            ssl) via properties of the request header, uncomment 'restPassword' below 
+            (the properties will then be ignored) 
+            The 'restRotatingKeys' option changes the hashing order of the rest security 
+            keys from the default 
+                {salt, scrypt-hashed-master-password (if used), restPassword, timestamp, nonce} 
+            to one that depends on the timestamp; see jax-rs-security.txt 
+            The 'restUseScrypt' (meaningful only for non-empty restPassword) option mandates 
+            an additional request header property 'scryptPasswd' that is generated from the\
+            restPassword using com.lambdaworks.crypto.SCryptUtil.scrypt 
+            (www.tarsnap.com/scrypt.html) 
+            
+        <property name="restPassword" value="..." /> 
+        -->
+
+        <property name="restSalt" value="..." />
+        <property name="restValidationTimeToLiveMillis" value="240000" />
+        <property name="restUseScrypt" value="true" />
+        <property name="hashOrderFn" ref="sampleHashOrderFn" />
+    </bean>
+
+    <!-- 'sampleHashOrderFn' bean (below) is instance of a class implementing 
+         com.clairmail.service.token.HashOrderFn.
+            hashOrder(String responseSimpleName, String restSalt, String restPassword, long epochTimestampMillis, String[] nid, boolean useScrypt)
+
+	     @param responseSimpleName simple name of the ResponseType class, 
+	               either KillSsoSessionResponseType, MatchSsoTokenResponseType
+	               SsoSessionResponseType, or ValidateSsoSessionResponseType
+	     @param restSalt      salt used to obscure password (optional, ignored if "" or null)
+	     @param restPassword
+	     @param epochTimestampMillis  time in millis since the 1970 'epoch' UTC
+	     @param nid    the 'nonce id' either externalId + username or the sso token, whichever of the two is argument of the request 
+         @param useScrypt     whether to include the scryptified password
+
+        RETURNS an int array of length 4 (or 5 if scrypt is used) containing indices into the key list
+         
+        {salt, restPassword, [scryptPassword, if used], epochTimestampMillis, nonce}
+        
+        that is used to create the hmac
+        This example is based solely on timestamp and restSalt and restPassword; the first index is
+            startIdx = ((int) Math.abs(epochTimestampMillis * (restPassword.hashCode() + restSalt.hashCode())/restSalt.hashCode())) % keyCount;
+            where keyCount is either 4 or 5 (for scrypt)
+            
+         if no bean is specified, the LinearOrderFn is used, which always returns {0,1,2,3} or {0,1,2,3,4} (for scyrpt)     
+     -->
+    <bean id="sampleHashOrderFn" class="com.clairmail.service.token.PasswordAndSaltHashcodeHashOrderFn1" />
+</beans>

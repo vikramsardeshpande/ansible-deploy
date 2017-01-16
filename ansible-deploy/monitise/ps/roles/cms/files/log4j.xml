@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE log4j:configuration SYSTEM "log4j.dtd">
+
+<!-- ===================================================================== -->
+<!-- -->
+<!-- Log4j Configuration -->
+<!-- -->
+<!-- ===================================================================== -->
+<!-- $Id: log4j.xml 4360 2008-01-30 17:00:35Z bj $ -->
+<!-- $Revision: 4360 $ -->
+<!-- | For more configuration infromation and examples see the Jakarta Log4j | owebsite: http://jakarta.apache.org/log4j -->
+<log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/" debug="false">
+  <!-- ================================= -->
+  <!-- Preserve messages in a local file -->
+  <!-- ================================= -->
+  <!-- A time/date based rolling appender -->
+<appender name="FILE" class="org.apache.log4j.DailyRollingFileAppender">
+	 <param name="File" value="/var/log/monitise/cms/cmserver.log" />
+         <param name="Append" value="true" />
+         <param name="DatePattern" value="'.'yyyy-MM-dd-HH" />
+         <param name="MaxFileSize" value="20MB" />
+         <param name="MaxBackupIndex" value="25" />
+        <layout class="org.apache.log4j.PatternLayout">
+        <param name="ConversionPattern" value="%d{ISO8601} [%t] %-5p [%c] %m%n" />
+         </layout>
+       </appender>
+  <!-- A time/date based rolling appender that logs error messages only -->
+  <appender name="ERROR_FILE" class="org.apache.log4j.RollingFileAppender">
+    <param name="File" value="${catalina.home}/logs/titan-server-errors.log" />
+    <param name="Append" value="false" />
+    <param name="MaxFileSize" value="100MB" />
+    <param name="MaxBackupIndex" value="10" />
+    <layout class="org.apache.log4j.PatternLayout">
+      <param name="ConversionPattern" value="%d{ISO8601} [%t] %-5p [%c] %m%n" />
+    </layout>
+    <filter class="org.apache.log4j.varia.LevelRangeFilter">
+      <param name="LevelMin" value="ERROR" />
+    </filter>
+  </appender>
+  <!-- SyslogHost must be configured to receive message from network, which is disabled by default. This can be enabled within Debian in /etc/init.d/sysklogd 
+    by changing the SYSLOGD variable to include "-r". -->
+  <appender name="SYSLOG" class="org.apache.log4j.net.SyslogAppender">
+    <param name="SyslogHost" value="127.0.0.1" />
+    <param name="Facility" value="USER" />
+    <param name="FacilityPrinting" value="true" />
+    <layout class="org.apache.log4j.PatternLayout">
+      <param name="ConversionPattern" value="%d{ISO8601} [%t] %-5p [%c] %m%n" />
+    </layout>
+  </appender>
+
+  <!-- ============================== -->
+  <!-- Append messages to the console -->
+  <!-- ============================== -->
+  <appender name="CONSOLE" class="org.apache.log4j.ConsoleAppender">
+    <param name="Target" value="System.out" />
+    <layout class="org.apache.log4j.PatternLayout">
+      <param name="ConversionPattern" value="%t %d{ISO8601} %-5p [%c{1}:%M] %m%n" />
+    </layout>
+  </appender>
+  <!-- ================ -->
+  <!-- Limit categories -->
+  <!-- ================ -->
+  <category name="com.clairmail">
+    <priority value="DEBUG" />
+  </category>
+  <category name="com.clairmail.service.product">
+    <priority value="INFO" />
+  </category>
+
+  <category name="com.clairmail.extensions.spring.EncryptedPropertyPlaceholderConfigurer">
+    <priority value="INFO" />
+  </category>
+  <category name="com.clairmail.event.impl.EventDispatcherImpl">
+    <priority value="ERROR" />
+  </category>
+  <category name="com.clairmail.service.ConnectExceptionTransactionManager">
+    <priority value="ERROR" />
+  </category>
+  <category name="com.clairmail.component.sm.ClusterTrackerComponent">
+    <priority value="WARN" />
+  </category>
+  <category name="com.clairmail.service.alert.ConditionalAlertSenderServiceImpl">
+    <priority value="WARN" />
+  </category>
+  <!-- Quiet down the redelivery service, it logs debugs every 30 secs or so -->
+  <category name="com.clairmail.service.recovery.MessageRedeliveryServiceImpl">
+    <priority value="WARN" />
+  </category>
+  <!-- Quiet down session expiration, it logs debugs every 30 secs or so -->
+  <category name="com.clairmail.service.session">
+    <priority value="WARN" />
+  </category>
+  <!-- Quiet down the security package, logs for every access to multitenant object -->
+  <category name="com.clairmail.security">
+    <priority value="WARN" />
+  </category>
+  <!-- Quiet down the logs for every access to pending state event -->
+  <category name="com.clairmail.service.state.PendingStateEventSubmitterImpl">
+    <priority value="WARN" />
+  </category>
+  <!-- Quiet down the logs - verbose debug statements on frequent schedule -->
+  <category name="com.clairmail.service.state.ConversationalStateServiceImpl">
+    <priority value="INFO" />
+  </category>
+  <category name="com.clairmail.service.servicedata.ServiceDataServiceImpl">
+    <priority value="INFO" />
+  </category>
+  <category name="com.clairmail.service.webclient.WebClientServiceImpl">
+    <priority value="INFO" />
+  </category>
+  <!-- Quiet down Email Server -->
+  <category name="com.clairmail.email">
+    <priority value="WARN" />
+  </category>
+  <!-- Quiet down SMPP Server -->
+  <category name="com.clairmail.smpp">
+    <priority value="WARN" />
+  </category>
+  <category name="ie.omk.smpp">
+    <priority value="WARN" />
+  </category>
+  <category name="org.hibernate.engine.StatefulPersistenceContext.ProxyWarnLog">
+    <priority value="ERROR" />
+  </category>
+  <category name="com.whirlycott">
+    <priority value="ERROR" />
+  </category>
+  <category name="org.hibernate.hql.ast.tree.FromElementType">
+    <priority value="ERROR" />
+  </category>
+  <category name="org.apache.axis2">
+    <priority value="INFO" />
+  </category>
+  <category name="org.hibernate.util.JDBCExceptionReporter">
+    <priority value="ERROR" />
+  </category>
+  <!-- ======================= -->
+  <!-- Setup the Root category -->
+  <!-- ======================= -->
+  <root>
+    <priority value="WARN" />
+    <!--appender-ref ref="FILE"/ -->
+    <appender-ref ref="FILE" />
+    <!--appender-ref ref="SYSLOG" / -->
+    <!--appender-ref ref="ERROR_FILE" / -->
+  </root>
+</log4j:configuration>
+

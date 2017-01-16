@@ -1,0 +1,30 @@
+---
+
+- name: obtain jdk7u51 from mai01-build-02v
+  sudo: no
+  local_action: shell rsync -a {{ aduser }}@mai01-build-02v:/share/jenkins/thirdparty/jdk-7u51-linux-x64.gz {{ localcache }}/thirdparty
+  when: internal == 'yes'
+
+- name: setup /opt/java
+  file: path=/opt/java state=directory owner=root group=root mode=0755
+
+- name: install /etc/profile.d/java.sh
+  copy: src=java.sh dest=/etc/profile.d/java.sh
+
+- name: copy jdk7 to server
+  copy: src={{ localcache }}/jdk-7u51-linux-x64.gz dest={{ backup_root }}/thirdparty
+
+- name: extract jdk7
+  command: /bin/tar --no-same-owner -xf {{ backup_root }}/thirdparty/server-jre-7u51-linux-x64.gz
+           chdir=/opt/java
+           creates=/opt/java/jdk1.7.0_51
+
+- name: configure jdk7 java alternative
+  command: /usr/sbin/alternatives --install /usr/bin/java java
+           /opt/java/jdk1.7.0_51/bin/java 17051
+           --slave /usr/bin/JAVA_HOME JAVA_HOME /opt/java/jdk1.7.0_51
+           --slave /usr/bin/javac javac /opt/java/jdk1.7.0_51/bin/javac
+           --slave /usr/bin/jar jar /opt/java/jdk1.7.0_51/bin/jar
+
+- name: ensure best java alternative is selected
+  command: /usr/sbin/alternatives --auto java

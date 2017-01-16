@@ -1,0 +1,30 @@
+---
+# Stop all the things!
+# ... except httpd, vsftpd, redis, redis-sentinel
+
+#- name: stop tomcat
+#  service: name=tomcat state=stopped
+#  sudo: yes
+
+#  tags: ['csr', 'mweb', 'batchloader', 'enrollment', 'restapi', 'webclient', 'tokenmanager']
+
+#- name: stop cms
+#  service: name=cms state=stopped
+#  sudo: yes
+#  tags: ['cms']
+
+#- name: stop smppsim
+#  service: name=smppsim state=stopped
+#  sudo: yes
+#  tags: ['smppsim']
+
+#- name: stop event-relay
+#  service: name=event-relay state=stopped
+#  sudo: yes
+#  tags: ['event-relay']
+
+#- name: stop hornetq
+#  service: name=hornetq state=stopped
+
+#  sudo: yes
+#  tags: ['hornetq']

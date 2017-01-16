@@ -1,0 +1,26 @@
+---
+# install smppsim and setup as a service
+
+- name: setup {{ monitise_root }}/smppsim
+  file: path={{ monitise_root }}/smppsim state=directory owner=cm{{ instance }}
+
+- name: setup /var/log/monitise/smppsim
+  file: path=/var/log/monitise/smppsim state=directory owner=cm{{ instance }} mode=2755
+
+- name: copy smppsim-web.jar
+  copy: src=smppsim-web.jar dest={{ monitise_root }}/smppsim
+
+- name: Generate smpppsim startup script
+  template: src=smppsim.init.j2 dest=/etc/init.d/smppsim mode=755
+
+- name: link {{ monitise_root }}/smppsim/logs to /var/log/monitise/smppsim
+  file: path={{ monitise_root }}/smppsim/logs src=/var/log/monitise/smppsim state=link
+
+- name: register smppsim as a service
+  command: /sbin/chkconfig --add smppsim
+
+- name: start the simulator service
+  service: name=smppsim state=started
+
+- name: enable smppsim service at boot
+  service: name=smppsim enabled=yes

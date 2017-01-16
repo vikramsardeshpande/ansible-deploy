@@ -1,0 +1,182 @@
+# logging
+LogFormat "%h %l %u %t \"%r\" %>s %b - rt: %T / %D" vhost_common
+
+#<VirtualHost {{ ansible_default_ipv4['address'] }}:80>
+<VirtualHost *:80>
+        ServerName {{ ansible_fqdn }}
+        ServerAlias {{ ansible_hostname }}
+
+        # amount of time server will wait for certain events before failing request
+        Timeout 90
+
+        # HTTP keep-alive settings
+        KeepAliveTimeout 10
+        KeepAlive on
+
+        # configure mod_proxy
+        ProxyTimeout 30
+        ProxyRequests Off
+
+        # RDC settings
+        LimitRequestBody 8096000
+        LimitRequestFields 150
+        LimitRequestFieldsize 8096000
+        LimitRequestLine 8096000
+
+        ####
+        RewriteEngine On
+        ServerSignature Off
+
+        ## allow only three request methods
+        RewriteCond %{REQUEST_METHOD} !^(GET|POST|PUT|DELETE)$ [NC]
+        RewriteRule ^(.*)$ - [F,L]
+        ## invalid characters in cookies
+        RewriteCond %{HTTP_COOKIE} ^.*(<|>|'|%0A|%0D|%27|%3C|%3E|%00).* [NC]
+        RewriteRule ^(.*)$ - [F,L]
+        ## invalid characters in the full HTTP request string.
+        RewriteCond %{REQUEST_URI} ^.*(,|;|:|<|>|">|"<|\\\.\.\\).* [NC,OR]
+        RewriteCond %{REQUEST_URI} ^.*(\=|\@|\[|\]|\^|\`|\{|\}|\~).* [NC,OR]
+        RewriteCond %{REQUEST_URI} ^.*(\'|%0A|%0D|%27|%3C|%3E|%00).* [NC]
+        RewriteRule ^(.*)$ - [F,L]
+        ## bad query string: sql injection attempts
+        RewriteCond %{QUERY_STRING} ^.*(or|and)%20([0-9]=[0-9]).*  [NC,OR]
+        RewriteCond %{QUERY_STRING} ^.*(\<|%3C).*script.*(\>|%3E) [NC,OR]
+        RewriteCond %{QUERY_STRING} ^.*(/XSS/).*  [NC]
+        RewriteRule ^(.*)$ - [F,L]
+
+        RewriteCond %{QUERY_STRING} ^path       [NC]
+        RewriteCond %{QUERY_STRING} ^.*(\.\.|%2e%2e|%u002e%u002e|\.%2e|%2e\.) [NC]
+        RewriteRule ^(.*)$ /mobile? [R=301,L]
+        RewriteRule ^/$ mobile [R]
+
+
+        ProxyPass /cms ajp://localhost:20103/cms
+        ProxyPassReverse /cms ajp://localhost:20103/cms
+
+        ProxyPass /csr ajp://localhost:8009/csr
+        ProxyPassReverse /csr ajp://localhost:8009/csr
+
+        ProxyPass /mobile ajp://localhost:8009/mobile
+        ProxyPassReverse /mobile ajp://localhost:8009/mobile
+
+        ProxyPass /webclient ajp://localhost:8009/webclient
+        ProxyPassReverse /webclient ajp://localhost:8009/webclient
+
+        ProxyPass /banking_rest_api ajp://localhost:8009/banking_rest_api
+        ProxyPassReverse /banking_rest_api ajp://localhost:8009/banking_rest_api
+
+        ProxyPass /enrollment ajp://localhost:8009/enrollment
+        ProxyPassReverse /enrollment ajp://localhost:8009/enrollment
+
+        ProxyPass /TokenManager ajp://localhost:8009/TokenManager
+        ProxyPassReverse /TokenManager ajp://localhost:8009/TokenManager
+
+        ProxyPass /simulator http://localhost:20108
+        ProxyPassReverse /simulator http://localhost:20108
+
+        <Directory "/var/www/icons">
+                Options -Indexes -MultiViews FollowSymLinks
+                AllowOverride None
+                Order allow,deny
+                Allow from all
+        </Directory>
+        ErrorDocument 403 /error.html
+        ErrorDocument 404 /error.html
+
+        # logging
+        CustomLog /var/log/httpd/{{ ansible_fqdn }}.access_log vhost_common
+        ErrorLog  /var/log/httpd/{{ ansible_fqdn }}.error_log
+
+</VirtualHost>
+
+#<VirtualHost {{ ansible_default_ipv4['address'] }}:443>
+#        ServerName {{ ansible_fqdn }}
+#        ServerAlias {{ ansible_hostname }}
+#
+#        # begin SSL configuration
+#        SSLEngine on
+#        # SSL certificate
+#        SSLCertificateFile /etc/pki/tls/certs/servername.crt
+#
+#        # SSL private key
+#        SSLCertificateKeyFile /etc/pki/tls/certs/servername.key
+#
+#        # SSL Chain File
+#        #SSLCertificateChainFile /etc/pki/tls/certs/Intermidiate.crt
+#        #SSLCertificateChainFile /etc/pki/tls/certs/CAroot.crt
+#
+#        # amount of time server will wait for certain events before failing request
+#        Timeout 90
+#
+#        # HTTP keep-alive settings
+#        KeepAliveTimeout 10
+#        KeepAlive on
+#
+#        # configure mod_proxy
+#        ProxyTimeout 30
+#        ProxyRequests Off
+#
+#        # RDC settings
+#        LimitRequestBody 8096000
+#        LimitRequestFields 150
+#        LimitRequestFieldsize 8096000
+#        LimitRequestLine 8096000
+#        SSLProtocol ALL +SSLv3 +TLSv1
+#        SSLCipherSuite ALL:!ADH:!NULL:!EXP:!SSLv2: !LOW:!MEDIUM:RC4+RSA:+HIGH
+#
+#        ####
+#        RewriteEngine On
+#        ServerSignature Off
+#
+#        ## allow only three request methods
+#        RewriteCond %{REQUEST_METHOD} !^(GET|POST|PUT|DELETE)$ [NC]
+#        RewriteRule ^(.*)$ - [F,L]
+#        ## invalid characters in cookies
+#        RewriteCond %{HTTP_COOKIE} ^.*(<|>|'|%0A|%0D|%27|%3C|%3E|%00).* [NC]
+#        RewriteRule ^(.*)$ - [F,L]
+#        ## invalid characters in the full HTTP request string.
+#        RewriteCond %{REQUEST_URI} ^.*(,|;|:|<|>|">|"<|\\\.\.\\).* [NC,OR]
+#        RewriteCond %{REQUEST_URI} ^.*(\=|\@|\[|\]|\^|\`|\{|\}|\~).* [NC,OR]
+#        RewriteCond %{REQUEST_URI} ^.*(\'|%0A|%0D|%27|%3C|%3E|%00).* [NC]
+#        RewriteRule ^(.*)$ - [F,L]
+#        ## bad query string: sql injection attempts
+#        RewriteCond %{QUERY_STRING} ^.*(or|and)%20([0-9]=[0-9]).*  [NC,OR]
+#        RewriteCond %{QUERY_STRING} ^.*(\<|%3C).*script.*(\>|%3E) [NC,OR]
+#        RewriteCond %{QUERY_STRING} ^.*(/XSS/).*  [NC]
+#        RewriteRule ^(.*)$ - [F,L]
+#
+#        RewriteCond %{QUERY_STRING} ^path       [NC]
+#        RewriteCond %{QUERY_STRING} ^.*(\.\.|%2e%2e|%u002e%u002e|\.%2e|%2e\.) [NC]
+#        RewriteRule ^(.*)$ /mobile? [R=301,L]
+#        RewriteRule ^/$ mobile [R]
+#
+#
+#        ProxyPass /cms ajp://localhost:20103/cms
+#        ProxyPassReverse /cms ajp://localhost:20103/cms
+#
+#        ProxyPass /csr ajp://localhost:8009/csr
+#        ProxyPassReverse /csr ajp://localhost:8009/csr
+#
+#        ProxyPass /mobile ajp://localhost:8009/mobile
+#        ProxyPassReverse /mobile ajp://localhost:8009/mobile
+#
+#        ProxyPass /webclient ajp://localhost:8009/webclient
+#        ProxyPassReverse /webclient ajp://localhost:8009/webclient
+#
+#        ProxyPass /banking_rest_api ajp://localhost:8009/banking_rest_api
+#        ProxyPassReverse /banking_rest_api ajp://localhost:8009/banking_rest_api
+#
+#        ProxyPass /enrollment ajp://localhost:8009/enrollment
+#        ProxyPassReverse /enrollment ajp://localhost:8009/enrollment
+#
+#        ProxyPass /TokenManager ajp://localhost:8009/TokenManager
+#        ProxyPassReverse /TokenManager ajp://localhost:8009/TokenManager
+#
+#        ProxyPass /simulator http://localhost:20108
+#        ProxyPassReverse /simulator http://localhost:20108
+#
+#
+#        # logging
+#        CustomLog /var/log/httpd/{{ ansible_fqdn }}.access_SSL_log vhost_common
+#        ErrorLog  /var/log/httpd/{{ ansible_fqdn }}.error_SSL_log
+#</VirtualHost>

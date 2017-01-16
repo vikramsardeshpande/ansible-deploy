@@ -1,0 +1,19 @@
+--- 
+  - hosts: localhost 
+    connection: local 
+    gather_facts: no 
+    vars_files: 
+       - staging_public_lb_info 
+    vars:
+       region: us-east-1 
+       prefix: staging 
+    tasks: 
+       - name: Delete Load Balancer for EC2 instances 
+         ec2_elb_lb: 
+           name: "{{ staging_lb_name }}" 
+           region: "{{ region }}"
+           state: absent
+           wait: yes
+           wait_timeout: 600
+#       - name: write load balancer name  to {{ prefix }}_public_lb_info file
+#         shell: echo  > "{{ prefix }}"_public_lb_info

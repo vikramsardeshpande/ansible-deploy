@@ -1,0 +1,124 @@
+---
+
+node_id: dev
+
+# smpp-connection.properties
+smpp_hostname_ConSim: localhost
+
+db_vendor: mssql
+hqdata_root: /backup/hornetq
+batch_data: /backup/alerts
+disco_root: /backup/disco
+disco_processed: /backup/disco_processed
+
+## CMSERVER 
+cms_base_package: clairmail-server-5.1.7.zip
+cms_solution_package:
+mbanking_package: mbanking-5.1.7-mock.zip
+#integration_package: integration-mbanking-ws-5.1.7.zip
+integration_package: 
+
+# Event relay
+event_relay_base_package: event-relay-5.1.7-dist.zip
+
+# Token Manager
+TokenManager_base_package: TokenManager.war
+
+# CSR Console 
+csr_base_package: csr-console-5.1.7.war
+csr_solution_package: purdue-csr.zip
+
+# BatchLoader 
+BatchLoaderService_base_package: BatchLoaderService.war
+BatchLoaderService_solution_package: 
+
+
+# mBlox disco details
+disco_enabled: false
+disco_user: disco123
+disco_password: disco123
+disco_proxy: false
+disco_proxy_url: http://localhost:8080
+
+# SMPPSIM details 
+smppsim_enabled: 'yes'
+
+# cmservice.properties
+use_clustering: false
+server_http_port: 20102
+server_internal_port: 20103
+server_shutdown_port: 20104
+server_cluster_tcp_port: 20105
+server_http_address: localhost
+server_cluster_tcp_address: localhost
+server_cluster_multicast_address: 224.0.0.64
+server_cluster_multicast_port: 45567
+cms_loglevel: DEBUG
+low_memory: True
+disco_ftp_site: localhost
+disco_ftp_pass: 22disco
+oltp_mssql_name: clairdb
+oltp_mssql_host: oltpdb.c3g6opeugpra.us-east-1.rds.amazonaws.com
+oltp_mssql_port: 1433
+oltp_mssql_user: testoltpuser
+oltp_mssql_password: testoltppass
+#dwh_mssql_name: qadwh513
+#dwh_mssql_host: 192.168.2.98
+#dwh_mssql_port: 1433
+#dwh_mssql_user: qadwh513
+#dwh_mssql_password: qadwh513
+password_min_length: 8
+password_min_numbers: 0
+password_min_mixedcase: 0
+password_min_specialchars: 0
+password_min_score: 0
+user_account_locking_feature: true
+max_failed_login_attempts: 6
+
+#oltp_oracle_port: 1521
+#oltp_oracle_user: clairoltp
+#oltp_oracle_password: clairoltp
+#oltp_oracle_host: 10.51.233.64
+#oltp_oracle_name: XE
+#dwh_oracle_name: XE
+#dwh_oracle_host: 192.51.233.64
+#dwh_oracle_port: 1521
+#dwh_oracle_user: dw221
+#dwh_oracle_password: dw221
+
+###  Postgres
+
+#oltp_postgres_name: oltptestdb
+#oltp_postgres_host: oltpdb-pg.c3g6opeugpra.us-east-1.rds.amazonaws.com
+#oltp_postgres_port: 5432
+#oltp_postgres_user: oltpu
+#oltp_postgres_password: oltppass
+#
+# email-connection.properties
+email_connection_names: 
+email_smtp_hostname_ConA: 10.51.233.64
+email_domains_serviced_ConA: claircorp.com
+
+
+# rdc.properties
+rdc_start_session_back_end_url: 
+rdc_deposit_check_back_end_url: 
+rdc_client_certificate_format: 
+rdc_client_certificate_location:
+rdc_client_certificate_password:
+rdc_partner_id: 
+router_url: 
+
+#connector-rsa-onsite-messages.properties
+rsa_onsite_admin_endpoint_url: 
+rsa_onsite_endpoint_url: 
+rsa_ws_callerId: websrvr
+rsa_ws_caller_org_name: 
+rsa_ws_credential: 
+
+# solutions_environment.properties
+bank_endpoint_url: 
+
+
+# connection protocol on app servers, it is used in connection.properties for csr etc
+connection_protocol: http

@@ -1,0 +1,37 @@
+---
+# Deploy event-relay 
+
+- name: "{{ monitise_root }}/event-relay exist or not"
+  stat: path={{ monitise_root }}/event-relay
+  register: check_path_event_relay1
+  when: backup_option
+
+- name: "{{ monitise_root }}/event-relay status"
+  debug: msg="Skipping the event-relay backup"
+  when: backup_option and check_path_event_relay1.stat.exists==false
+
+- name: backup old event-relay install
+  shell: zip -r  {{ backup_applications  }}/event-relay-backup{{ ansible_date_time['date'] + '_' + ansible_date_time['time'].replace(':', '_') }}.zip {{ monitise_root }}/event-relay*
+        chdir={{ monitise_root }}
+  when: backup_option and check_path_event_relay1.stat.exists
+
+- name: remove old event-relay install
+  shell: rm -rf {{ monitise_root }}/event-relay
+
+- name: unzip event-relay zip
+  command: /usr/bin/unzip -qod {{ monitise_root }} {{ backup_root }}/COREBuilds/{{ core_branch }}/{{ core_build }}/event-relay/{{ event_relay_base_package }}
+
+- name: move to "event-relay"
+  shell: /bin/mv {{ monitise_root }}/{event-relay-*,event-relay}
+
+- name: set the permissions for " event-relay"
+  command: chmod -R 755 {{ monitise_root }}/event-relay
+
+- name: symlink logs to /var/log...
+  file: src=/var/log/monitise/event-relay path={{ monitise_root }}/event-relay/logs state=link
+
+- name: generate event-relay.properties
+  template: src=event-relay.properties.j2 dest={{ monitise_root }}/event-relay/conf/event-relay.properties backup=yes
+
+- name: copy log4j.xml
+  copy: src=log4j.xml dest={{ monitise_root }}/event-relay/conf backup=yes

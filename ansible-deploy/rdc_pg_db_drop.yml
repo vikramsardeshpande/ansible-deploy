@@ -1,0 +1,18 @@
+--- 
+  - hosts: localhost  
+    connection: local 
+    gather_facts: no 
+    vars_files: 
+      - staging_vpc_info
+      - staging_sg_info
+    vars: 
+      oltpuser: oltpu
+      oltppass: oltppass
+      oltpdb: oltptestdb
+      oltpdata: testoltp
+      username: postgres_admin
+      password: postgres_pass
+      db_name: oltpdb
+    tasks: 
+    - name: Drop database and database user
+      shell: psql -h localhost -p 6100 -U {{ username }}  -d postgres -f postgres/DROP_DB_PG.sql -v oltpdb={{ oltpdb }} -v oltpuser={{ oltpuser }}

@@ -1,0 +1,119 @@
+#!/bin/sh
+
+# chkconfig: - 75 19
+#
+### BEGIN INIT INFO
+# Provides: event-relay
+# Required-Start: $network $syslog
+# Required-Stop: $network $syslog
+# Default-Start:
+# Default-Stop:
+# Short-Description: start and stop event-relay
+### END INIT INFO
+#
+
+# Discover where the shell script resides
+ORIGDIR={{ monitise_root }}/event-relay/bin
+PROGNAME=$0
+PROGDIR=`dirname $PROGNAME`
+PROGNAME=`basename $PROGNAME`
+cd $PROGDIR
+PROGDIR={{ monitise_root }}/event-relay/bin
+cd ..
+DIST_HOME={{ monitise_root }}/event-relay
+cd $ORIGDIR
+
+# Set up known files and locations
+LIB_DIR="$DIST_HOME/lib"
+EXT_LIB_DIR="$DIST_HOME/lib/ext"
+CP=$DIST_HOME/conf:$LIB_DIR:$EXT_LIB_DIR
+PID_FILE="$DIST_HOME/bin/pid-event-relay"
+
+# Shutdown info
+SHUTDOWN_PORT="64209"
+SHUTDOWN_CMD="SHUTDOWN"
+
+
+# Make the logs directory
+if [ ! -d $DIST_HOME/logs/ ] ; then
+    mkdir $DIST_HOME/logs
+fi
+
+# place all the jars in the classpath variable
+for file in $( find $LIB_DIR -name '*.jar' )
+do
+    CP=$CP:$file
+done
+# Java options
+JAVA_OPTS="-Xms1500m -Xmx1500m -XX:NewSize=250m -XX:MaxNewSize=250m -XX:SurvivorRatio=5 -XX:PermSize=128m -XX:MaxPermSize=128m -server"
+
+
+SYS_VARS="-Dcom.sun.management.jmxremote=true -Dcom.clairmail.server.home=$DIST_HOME -Dcom.clairmail.server.shutdownPort=$SHUTDOWN_PORT -Dcom.clairmail.server.shutdownCmd=$SHUTDOWN_CMD -Djava.util.logging.config.file=../conf/runtime/javalog.properties"
+
+EXEC_CMD="java -cp $CP $JAVA_OPTS $SYS_VARS com.clairmail.server.Main $@"
+
+# The command to be run
+function start()
+{
+       if [  -e "$PID_FILE" ]; then
+           echo "event-relay is running `cat $PID_FILE`"
+           exit 0
+        else
+          echo " Starting event-relay service"
+          touch $DIST_HOME/logs/server.out
+          nohup $EXEC_CMD >> "$DIST_HOME"/logs/server.out 2>&1 &
+	fi 
+        if [ ! -z "$PID_FILE" ]; then
+          echo $! > $PID_FILE
+        fi
+}
+function forcestop()
+{
+       if [  -e "$PID_FILE" ]; then
+         echo "force stopping event-relay service"
+           kill -9 `cat $PID_FILE`
+           rm -f $PID_FILE
+       else
+           echo "Cannot locate PID file, unable to shut down"
+        fi 
+}
+function stop()
+   {   if [  -e "$PID_FILE" ]; then
+        java -cp $CP com.clairmail.server.Shutdown $SHUTDOWN_PORT $SHUTDOWN_CMD >/dev/null
+         echo "stopping event-relay service"
+         rm -f $PID_FILE
+       else 
+      echo "Cannot locate PID file, unable to shut down"
+     fi
+}
+function status()
+{        
+    if [  -e "$PID_FILE" ]; then
+         echo "event-relay is running `cat $PID_FILE`"
+         exit 0
+    else 
+         echo "event-relay is not running" 
+	 exit 3
+    fi
+}
+case "$1" in
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    restart)
+        stop
+        start
+        ;;
+    forcestop) 
+        forcestop
+	;;
+    status)
+       status
+	;;
+     *)
+        echo "Usage: event-relay {start|stop|restart|status|forcestop}"
+        exit 1
+esac

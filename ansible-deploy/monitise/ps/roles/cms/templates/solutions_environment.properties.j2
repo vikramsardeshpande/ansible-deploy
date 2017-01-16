@@ -1,0 +1,49 @@
+#bank.endpoint.url=http://127.0.0.1:5880/MobileRouter/CoreRouter.asmx
+#bank.endpoint.url=http://127.0.0.1:9191/OTS_local/
+bank.endpoint.url={{ bank_endpoint_url }}
+# Soap action for each service
+connector.accountservice.soapaction=http://schemas.clairmail.com/2009/01/wsdl/AccountService
+connector.profileservice.soapaction=http://schemas.clairmail.com/2009/01/wsdl/ProfileService
+connector.paymentservice.soapaction=http://schemas.clairmail.com/2009/01/wsdl/PaymentService
+connector.transferservice.soapaction=http://schemas.clairmail.com/2009/01/wsdl/TransferService
+connector.locatorservice.soapaction=http://schemas.clairmail.com/2009/01/wsdl/LocatorService
+
+connector.locatorservice.findLocationsSoapAction=http://tempuri.org/FindLocations
+connector.locatorservice.getRouteSoapAction=http://tempuri.org/GetRoute
+
+connector.locatorservice.url=http://mobileapi.locatorsearch.com/LocatorSearchAPI.asmx
+connector.locatorservice.username=BED7D1DD
+connector.locatorservice.password=BED7D1DD-1DBE-4ECC-8AEA-581C7804837F
+
+connector.locatorservice.distance.unit.default=MILES
+#Max number of results to fetch for location
+connector.locatorservice.maxResults=50
+
+#This would be comma separated values. You can get details of available type by calling GetSearchbyOptions
+location.types.for.atm=1
+location.types.for.branch=2
+location.types.for.both=3
+
+max.transactions=50
+
+# The Bank's operating country.
+bank.country=US
+
+#locator properties
+locator.radius=50
+locator.accuracyLevel=5
+locator.maxResults=25
+locator.metric=MILES
+
+# Properties to configure the google locator service key and id
+application.key=gme-clairmail
+urlSigner.constructor=aW2_lK9-urzKbVmzDepi9Qf9kFE=
+
+# The Maximum transaction history period.
+max.trans.hist.period=90
+
+#Timezone for the dates in the response. All response dates from bank will have this timezone
+connector.input.date.timezoneID=EST
+lastProfileSynchTimeKey=lastProfileSynchTime
+createDateKey=createDate
+createDateFormat=MM/dd/yyyy HH:mm:ss

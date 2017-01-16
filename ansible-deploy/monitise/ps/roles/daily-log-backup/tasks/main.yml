@@ -1,0 +1,6 @@
+---
+# Deploy daily log rotation script
+
+- name: copying cmlog.backup script
+  template: src=cmlog.backup.j2 dest=/etc/cron.daily/cmlog.backup mode=755
+  sudo: yes

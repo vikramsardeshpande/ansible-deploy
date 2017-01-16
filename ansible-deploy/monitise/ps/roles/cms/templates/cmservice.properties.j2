@@ -1,0 +1,360 @@
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+#                                                                             #
+#                     Clairmail Server Configuration File                    #
+#              To be used with packaged-deployment zip archive               #
+#                                                                             #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+#
+# UNIQUE identifier for this node, 10 character max. - Required
+#node.id={{ node_id }}
+node.id={{ ansible_hostname }}
+#
+# Resource directory
+resource.directory=$CLAIRMAIL_HOME/conf
+resource.tc.directory=$CLAIRMAIL_HOME/conf/tc
+#
+# Email,SMS,APPLE,ANDROID and BLACKBERRY connection files
+email.connection.file=email-connection.properties
+smpp.config.file=smpp-connection.properties
+apple.push.configuration.file=apple-push.properties
+android.push.configuration.file=android-push.properties
+blackberry.push.configuration.file=blackberry-push.properties
+batch.loader.client.config.file=batch-loader-client.properties
+save.username.configuration.file=save-username.properties
+
+
+# In case of MVP alerting, define the preference engine queue name 
+mvp.scheduler.queue=com.monitise.SchedulerInputQueue
+mvp.scheduler.version = v1
+
+#
+# Cluster flag - if clustering multiple nodes, set to true
+use.clustering={{ use_clustering }}
+#
+# JMX Addresses and Ports - Provide the host address and ports to be used
+# by the JMX connector on this instance of the server. If more than one instance
+# is to be run an a single machine, the ports must not conflict.
+jmx.address=localhost
+jmx.port=8100
+rmi.port=8335
+#
+# Internal web-server setup
+server.http.address={{ server_http_address }}
+server.http.port={{ server_http_port }}
+server.internal.address=localhost
+server.internal.port={{ server_internal_port }}
+server.shutdown.port={{ server_shutdown_port }}
+server.shutdown.command=QUIT
+# Internal web-server cluster config - ignored unless 'use.clustering=true'
+server.cluster.tcp.address={{ server_cluster_tcp_address }}
+server.cluster.tcp.port={{ server_cluster_tcp_port }}
+server.cluster.multicast.address={{ server_cluster_multicast_address }}
+server.cluster.multicast.port={{ server_cluster_multicast_port }}
+#
+cluster.heartbeat.interval=8000
+cluster.heartbeat.lost.threshold=45000
+#
+# Default country of origin for all system users.
+person.default.country=US
+#
+# Java Naming and Directory Interface Configuration - JMS Connection factories,
+# queeus, and topics are retrieved via JNDI. The information below is used to
+# connect to the HornetQ JNDI environment, see HornetQ documentation for details
+jndi.provider.url=jnp://localhost:1099
+jndi.factory.init=org.jnp.interfaces.NamingContextFactory
+jndi.factory.pkgs=org.jboss.naming:org.jnp.interfaces
+#
+# The username and password of the JMS user
+jms.user=clair
+jms.pass=clair
+#
+# The named JMS queues required by the server
+mo.queue=queue/com/clairmail/MOQueue
+mt.queue=queue/com/clairmail/MTQueue
+mt.redelivery=queue/com/clairmail/MTRedelivery
+event.queue=queue/com/clairmail/EventQueue
+eventLog.queue=queue/com/clairmail/EventLogRequestQueue
+# Management queue to get JMX information about other queues
+management.queue.name=hornetq.management
+#
+# The named JMS topics required by the server
+sync.topic=topic/com/clairmail/SyncTopic
+event.topic=topic/com/clairmail/EventTopic
+eventLog.topic=topic/com/clairmail/EventLogReplyTopic
+#
+# The number of JMS connections used to process MT messages
+mt.producer.connections=2
+# The total number of concurrent producers (will be divided into connections above)
+mt.producers=16
+# MO Producer time-to-live. plz make sure that command-timeout in rest-api has the same time as well.
+mo.producer.time.to.live=15000
+#
+# The number of JMS connections used to process MO messages
+mo.producer.connections=2
+# The total number of concurrent producers (will be divided into connections above)
+mo.producers=16
+#
+# The number of JMS connections used to send Sync responses
+sync.producer.connections=1
+# The total number of concurrent producers (will be divided into connections above)
+sync.producers=8
+#
+# The number of JMS connections used to send Sync responses
+event.producer.connections=1
+# The total number of concurrent producers (will be divided into connections above)
+event.producers=8
+#
+# The number of JMS connections/consumers-per-connection used to process requests
+request.processor.connections=2
+request.processor.consumers=8
+#
+# The number of JMS connections/consumers-per-connection used to process responses
+response.processor.connections=2
+response.processor.consumers=8
+#
+# The number of JMS connections/consumers-per-connection used by the long-term redelivery 
+redelivery.processor.connections=1
+redelivery.processor.consumers=2
+#
+# Event Dispatcher - allows the disabling of events
+events.to.queue=true
+events.to.topic=true
+#
+# Duplicate Message Detection
+dedup.sms.enabled=true
+dedup.sms.time.window=60000
+dedup.sms.cleanup.interval=3000
+
+{% if db_vendor == 'oracle' %}
+# Oracle Datasource Config (Comment out when running DBCP):
+jdbc.user={{ oltp_oracle_user }}
+jdbc.password={{ oltp_oracle_password }}
+jdbc.driver.class=oracle.jdbc.driver.OracleDriver
+#jdbc.url=jdbc:oracle:thin:@(DESCRIPTION = (ADDRESS_LIST = (ADDRESS =(PROTOCOL = TCP)(HOST = host)(PORT = 1521))) (CONNECT_DATA =(SERVER = DEDICATED) (SID = sid)))
+jdbc.url=jdbc:oracle:thin:@{{ oltp_oracle_host }}:{{ oltp_oracle_port }}/{{ oltp_oracle_name }}
+pool.init.size=5
+pool.max.active=200
+pool.min.active=5
+pool.validation.query=Select 1 from Dual
+pool.checker.validation.query=SELECT max(1) AS TEST from Role r
+# The max time to wait for a connection in seconds
+pool.wait.timeout=30
+# JDBC read-timeout in milliseconds 
+pool.read.timeout=90000
+#Time in seconds, to cache unused connections before closing connection.
+pool.inactivity.timeout=10
+#time interval, in seconds, for the cache daemon thread to enforce the time out limits.
+pool.check.interval=10
+# JDBC login timeout in seconds
+jdbc.login.timeout=2
+#Missing properties added by Vikram
+pool.check.interval=30
+pool.abandoned.timeout=10
+pool.max.idle=75
+pool.min.idle=0
+pool.max.wait=3000
+pool.test.on.borrow=true
+pool.test.on.return=false
+pool.test.while.idle=true
+pool.eviction.interval=500
+pool.eviction.batch=4
+# ####
+jdbc.fast.connection.failover=false
+jdbc.tcp.connection.timeout=3
+jdbc.ons.configuration=localhost
+pool.validate.connection=true
+hibernate.boolean.substitution=true 1, false 0
+hibernate.dialect=org.hibernate.dialect.Oracle10gDialect
+{% endif %}
+
+
+{% if db_vendor == 'mssql' %}
+# MSSQL Config
+jdbc.user={{ oltp_mssql_user }}
+jdbc.password={{ oltp_mssql_password }}
+jdbc.driver.class=net.sourceforge.jtds.jdbc.Driver
+jdbc.url=jdbc:jtds:sqlserver://{{ oltp_mssql_host }}:{{ oltp_mssql_port }}/{{ oltp_mssql_name }};sendStringParametersAsUnicode=false
+pool.init.size=0
+pool.max.active=75
+pool.max.idle=75
+pool.min.idle=0
+pool.max.wait=-1
+pool.validation.query=SELECT 1 AS TEST
+pool.checker.validation.query=SELECT max(1) AS TEST from Role r
+pool.test.on.borrow=true
+pool.test.on.return=false
+pool.test.while.idle=true
+pool.eviction.interval=500
+pool.eviction.batch=4
+hibernate.boolean.substitution=true true, false false
+hibernate.dialect=org.hibernate.dialect.SQLServerDialect
+{% endif %}
+
+{% if db_vendor == 'postgres' %}
+jdbc.user={{ oltp_postgres_user }}
+jdbc.password={{ oltp_postgres_password }}
+jdbc.driver.class=org.postgresql.Driver
+jdbc.url=jdbc:postgresql://{{ oltp_postgres_host }}:{{ oltp_postgres_port }}/{{ oltp_postgres_name }}
+pool.init.size=0
+pool.max.active=75
+pool.max.idle=75
+pool.min.idle=0
+pool.max.wait=-1
+pool.validation.query=SELECT 1 AS TEST
+pool.checker.validation.query=SELECT max(1) AS TEST from Role r
+pool.test.on.borrow=true
+pool.test.on.return=false
+pool.test.while.idle=true
+pool.eviction.interval=500
+pool.eviction.batch=4
+hibernate.boolean.substitution=true true, false false
+hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
+{% endif %}
+
+# DB2 Config
+#jdbc.user=user
+#jdbc.password=password
+#jdbc.driver.class=com.ibm.db2.jcc.DB2Driver
+#jdbc.url=jdbc:db2://host:50000/clairdb
+#pool.init.size=0
+#pool.max.active=75
+#pool.max.idle=75
+#pool.min.idle=0
+#pool.max.wait=-1
+#pool.validation.query=SELECT 1 AS TEST FROM sysibm.sysdummy1
+#pool.checker.validation.query=SELECT max(1) AS TEST from Role r
+#pool.test.on.borrow=true
+#pool.test.on.return=false
+#pool.test.while.idle=true
+#pool.eviction.interval=500
+#pool.eviction.batch=4
+#hibernate.boolean.substitution=true true, false false
+#hibernate.dialect=org.hibernate.dialect.DB2Dialect
+
+# Batch size for individual deletes performed when expiring various entities
+expiration.batch.size=100
+
+# Remote Deposit Capture Velocity Configuration
+rdc.daily.transaction.limit=3
+rdc.weekly.transaction.limit=15    
+rdc.daily.amount.limit=1000
+rdc.weekly.amount.limit=5000
+rdc.enable.velocity.limits=true
+
+#System Monitor Service log files location
+monitor.files.local.dir=/var/log/monitise/cms/rollingFile/
+monitor.maxrecords.avgresptime=50
+#
+#Disconnected Number Event FTP Site and login/pass
+disco.ftp.site={{ disco_ftp_site }}
+disco.ftp.login=disco
+disco.ftp.pass={{ disco_ftp_pass }}
+disco.ftp.local.dir={{ disco_processed }}/
+#
+#Disconnected Event Status values
+disco.event.status.new=NEW
+disco.event.status.started=IN_PROCESS
+disco.event.status.complete=COMPLETE
+#
+# Default periodic notification period (in days). 
+default.notification.period=90
+#
+# Configuration for the Web UI service, not needed if no UI deployed
+web.ui.xpath=//clairmailCustomerProfileAccountList/clairmailCustomerProfileAccount/shortcutText/text()
+web.ui.link=http://wap.cm.com
+iphone.push.alert.url=http://domain/mobile/alertdetail?id={0}&refid={1}
+# length in minutes of how long the web session lasts until it is cleaned up.
+web.ui.session.length=30
+web.ui.simple.session.length=30
+web.ui.authenticated.verified.session.length=5
+web.ui.authenticated.session.length=5
+web.ui.identified.verified.session.length=30
+web.ui.identified.session.length=2160
+#
+#Configure the Server to accept Wildcard ServiceOperation commands
+server.accept.wildcard.command=true
+server.wildcard.is.suffix=true
+#
+# Basic message-handling defaults
+ignore.anonymous.access=false
+ignore.unknown.command=false
+default.command=help
+#
+# Message Redelivery and Failure Recovery
+recovery.checkpoint.interval=5000
+recovery.checkpoint.queue.size=2000
+redelivery.interval.randomize=true
+redelivery.interval.low=5000
+redelivery.interval.high=10000
+redelivery.initial.retry.attempts=5
+redelivery.max.attempts=62
+#
+# Logging
+log.file=/var/log/monitise/cms/cmserver.log
+log.level={{ cms_loglevel }}
+log.maxfilesize=10
+log.maxbackupindex=25
+console.out=/var/log/monitise/cms/catalina.out
+#
+# Supress signatures by protocol, value can be a comma-delimited list 
+signature.suppressed.on=smpp
+#
+#Configure the server to send brief help messages, the default message is 
+# configured in the server-messages.properties file.
+server.sendbrief.help=true
+# Brief help protocols, can be a comma delimitted list
+server.sendbrief.protocols=smpp
+#
+# Session expiration in minutes, applies to web UI, and messaging sessions
+idle.session.timeout=20
+#
+# Authentication expiration in minutes - applies only to authentication schemes
+authentication.expire.mins=5
+#
+#Password Strength Policy
+password.min.length={{ password_min_length }}
+password.min.numbers={{ password_min_numbers }}
+password.min.mixedcase={{ password_min_mixedcase }}
+password.min.specialchars={{ password_min_specialchars }}
+password.min.score={{ password_min_score }}
+
+#User account locking feature. Set true to enable and false to disable this feature.
+user.account.locking.feature={{ user_account_locking_feature }}
+
+#Maximum failed login attempts before user account is locked.
+max.failed.login.attempts={{ max_failed_login_attempts }}
+# verification scheme configration properties
+
+# SMS-WEB/EMAIL-WEB verification scheme configuration
+
+#default 24 hours
+sms.web.time.to.live.minutes=1440 
+
+# use * for alphanumeric, | for letters, ^ for all chars (including :!@#$%^&*?_~), and # for numbers only
+sms.web.token.pattern=####
+
+# WEB-SMS/WEB-EMAIL verification scheme configuration
+
+#default 24 hours
+web.sms.time.to.live.minutes=1440
+
+# use * for alphanumeric, | for characters, and # for numbers only
+web.sms.token.pattern=####
+
+# Integration Gateway timeout in milliseconds, default 2 mins
+integration.gateway.default.timeout=120000
+
+#
+# Tuning params for heap and garbage collection, use only one:
+#
+# Use for local testing:
+# jvm.heap.gc=-Xmx1g -Xms1g -XX:NewRatio=1 -XX:+UseStringCache -XX:+UseParallelOldGC -XX:MaxPermSize=256m -XX:+HeapDumpOnOutOfMemoryError 
+# Default production heap; Increase -Xmx as appropriate for hardware:
+{% if low_memory | default(False) %}
+jvm.heap.gc=-Xmx256m -Xms256m -XX\:NewRatio\=1 -XX\:+UseStringCache -XX\:+UseParallelOldGC -XX\:MaxPermSize\=256m -XX\:+HeapDumpOnOutOfMemoryError 
+{% else %}
+jvm.heap.gc=-Xmx2048m -Xms2048m -Xmn1g -XX:+UseParallelGC -XX:ParallelGCThreads=4 -XX:MaxPermSize=1024m -XX:+HeapDumpOnOutOfMemoryError -XX:+UseStringCache -XX:+UseParallelOldGC -XX:NewSize=300m -XX:MaxNewSize=300m
+{% endif %}
+
+# Set true if legacy rdc connector is used and false if rdc with  integration framework is used. 
+use.legacy.rdc.connector=false

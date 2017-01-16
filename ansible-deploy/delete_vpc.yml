@@ -1,0 +1,17 @@
+--- 
+ - hosts: localhost 
+   connection: local
+   gather_facts: no 
+   vars: 
+     region: us-east-1
+     prefix: staging
+   vars_files: 
+     - staging_vpc_info
+   tasks: 
+     - name: delete vpc 
+       ec2_vpc: 
+         region: "{{ region }}"
+         state: absent
+         vpc_id: "{{ staging_vpc }}"
+         resource_tags: '{"name":"{{ prefix }}_vpc"}'
+         wait: yes

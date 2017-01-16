@@ -1,0 +1,38 @@
+--- 
+  - hosts: localhost 
+    connection: local 
+    gather_facts: no 
+    vars_files: 
+       - staging_vpc_info 
+       - staging_web_ec2_info
+       - staging_sg_info
+    vars:
+       region: us-east-1 
+       prefix: staging 
+       lb_name: newLB
+    tasks: 
+       - name: Create Load Balancer for EC2 instances 
+         ec2_elb_lb: 
+           aws_access_key: "{{ aws_access_key }}"
+           aws_secret_key: "{{ aws_secret_key }}"
+           name: "{{ lb_name }}" 
+           security_group_ids: "{{ staging_sg_web }}"
+           region: "{{ region }}"
+           subnets: "{{ staging_subnet_public_0 }}, {{ staging_subnet_public_1 }}"
+           listeners: 
+             - protocol: http 
+               load_balancer_port: 80  
+               instance_port: 80
+           health_check: 
+               ping_protocol: http 
+               ping_port: 80 
+               ping_path: "/index.html" 
+               response_timeout: 5 
+               interval: 10  
+               unhealthy_threshold: 2 
+               healthy_threshold: 5
+           state: present 
+           wait: yes
+         register: elb
+       - name: write load balancer name  to {{ prefix }}_public_lb_info file
+         shell: echo "{{ prefix }}_public_lb_name"":" "{{ lb_name }}" > "{{ prefix }}"_public_lb_info

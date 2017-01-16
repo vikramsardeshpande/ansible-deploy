@@ -1,0 +1,31 @@
+---
+#  To start the monitise related services
+#  command to use to start the services on backend servers
+#  ansible-playbook  -k -K start-all-services.yml -i ps/dev/hosts
+#  comand to use to start the services on fronend servers
+#  ansible-playbook  -k -K start-all-services.yml -t frontend -i ps/dev/hosts
+
+- hosts: mvp
+  user: cm{{ instance }}
+  sudo: yes
+  tasks: 
+  - name: start the hornetq service 
+    service: name=hornetq state=started 
+  - name: start the simulator service 
+    service: name=smppsim state=started 
+  - name: start the cms service 
+    service: name=cms state=started 
+#  - name: start the redis service 
+#    service: name=redis state=started 
+#  - name: start the redis-sentinel service 
+#    service: name=redis-sentinel state=started 
+#  - name: start the event-relay service 
+#    service: name=event-relay state=started 
+  - name: start the tomcat service 
+    service: name=tomcat state=started 
+    tags:
+    - frontend
+  - name: start the apache service 
+    service: name=httpd state=started 
+    tags:
+    - frontend

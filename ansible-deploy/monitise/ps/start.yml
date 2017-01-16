@@ -1,0 +1,28 @@
+---
+# Start all the things!
+# ... except httpd, vsftpd, redis, redis-sentinel
+
+- name: start hornetq
+  service: name=hornetq state=started
+  sudo: yes
+  tags: ['hornetq']
+
+- name: start smppsim
+  service: name=smppsim state=started
+  sudo: yes
+  tags: ['smppsim']
+
+- name: start cms
+  service: name=cms state=started
+  sudo: yes
+  tags: ['cms']
+
+- name: start tomcat
+  service: name=tomcat state=started
+  sudo: yes
+  tags: ['csr', 'mweb', 'batchloader', 'enrollment', 'webclient', 'restapi', 'tokenmanager']
+
+- name: start event-relay
+  service: name=event-relay state=started
+  sudo: yes
+  tags: ['event-relay']

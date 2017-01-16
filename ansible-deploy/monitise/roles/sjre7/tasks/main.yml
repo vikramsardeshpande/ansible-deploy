@@ -1,0 +1,34 @@
+---
+
+- name: obtain sjre7u51 from mai01-build-02v
+  sudo: no
+  local_action: shell rsync -a {{ aduser }}@mai01-build-02v:/share/jenkins/thirdparty/server-jre-7u51-linux-x64.gz {{ localcache }}/thirdparty
+  when: internal == 'yes'
+
+- name: setup /opt/java/java
+  file: path=/opt/java/java state=directory owner=root group=root mode=0755
+
+- name: install /etc/profile.d/java.sh
+  copy: src=java.sh dest=/etc/profile.d/java.sh
+
+- name: copy sjre7 to server
+  copy: src={{ localcache }}/thirdparty/server-jre-7u51-linux-x64.gz dest={{ backup_root }}/thirdparty
+
+- name: extract sjre7
+  command: /bin/tar --no-same-owner -xf {{ backup_root }}/thirdparty/server-jre-7u51-linux-x64.gz
+           chdir=/opt/java/java
+           creates=/opt/java/java/sjre1.7.0_51
+
+- name: rename sjre7 (originally "jdk")
+  command: /bin/mv /opt/java/java/jdk1.7.0_51 /opt/java/java/sjre1.7.0_51
+           creates=/opt/java/java/sjre1.7.0_51
+
+- name: configure sjre7 java alternative
+  command: /usr/sbin/alternatives --install /usr/bin/java java
+           /opt/java/java/sjre1.7.0_51/bin/java 17051
+           --slave /usr/bin/JAVA_HOME JAVA_HOME /opt/java/java/sjre1.7.0_51
+           --slave /usr/bin/javac javac /opt/java/java/sjre1.7.0_51/bin/javac
+           --slave /usr/bin/jar jar /opt/java/java/sjre1.7.0_51/bin/jar
+
+- name: ensure best java alternative is selected
+  command: /usr/sbin/alternatives --auto java

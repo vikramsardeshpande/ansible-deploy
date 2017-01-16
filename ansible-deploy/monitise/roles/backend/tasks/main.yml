@@ -1,0 +1,43 @@
+---
+
+- name: setup /var/log/monitise/cms
+  file: path=/var/log/monitise/cms state=directory owner=cm{{ instance }} mode=2755
+
+- name: setup /var/log/monitise/cms/rollingFile
+  file: path=/var/log/monitise/cms/rollingFile state=directory owner=cm{{ instance }} mode=2750
+
+- name: setup /var/log/monitise/event-relay
+  file: path=/var/log/monitise/event-relay state=directory owner=cm{{ instance }} mode=2755
+
+- name: setup /etc/init.d/cms
+  template: src=cms.init.j2 dest=/etc/init.d/cms mode=755
+ 
+- name: generate /etc/sysconfig/cms
+  template: src=tomcat6.j2 dest=/etc/sysconfig/cms
+
+- name: register cms as a service
+  command: /sbin/chkconfig --add cms
+
+- name: enable cms service
+  service: name=cms enabled=yes
+
+- name: generate event-relay init script
+  template: src=event-relay.init.j2 dest=/etc/init.d/event-relay mode=755
+
+- name: register event-relay as a service
+  command: /sbin/chkconfig --add event-relay
+
+- name: enable event-relay service
+  service: name=event-relay enabled=yes
+
+# for mvp-batch-processor
+- name: setup {{ batch_data }} directory
+  file: path={{ batch_data }} state=directory owner=cm{{ instance }} mode=2750
+
+- name: setup {{ batch_data }} subdirectories
+  file: path={{ batch_data }}/{{ item }} state=directory owner=cm{{ instance }} mode=2750
+  with_items:
+  - watch
+  - done
+  - failed
+  - staging

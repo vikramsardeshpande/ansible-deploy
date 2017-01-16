@@ -1,0 +1,59 @@
+jndi.provider.url=jnp://localhost:1099
+jndi.factory.init=org.jnp.interfaces.NamingContextFactory
+jndi.factory.pkgs=org.jboss.naming:org.jnp.interfaces
+event.queue=queue/com/clairmail/EventQueue
+event.query.queue=queue/com/clairmail/EventLogRequestQueue
+event.query.topic=topic/com/clairmail/EventLogReplyTopic
+
+{% if db_vendor == 'mssql' %}
+#MSSQL
+sql.dialect=SqlServer
+jdbc.username={{ dwh_mssql_user }}
+jdbc.password={{ dwh_mssql_password }}
+jdbc.driver.class=com.microsoft.sqlserver.jdbc.SQLServerDriver
+jdbc.url=jdbc:sqlserver://{{ dwh_mssql_host }}:{{ dwh_mssql_port }};databaseName={{ dwh_mssql_name }}
+hibernate.dialect=org.hibernate.dialect.SQLServerDialect
+{% endif %}
+
+{% if db_vendor == 'oracle' %}
+#ORACLE
+sql.dialect=Oracle
+jdbc.username={{ dwh_oracle_user }}
+jdbc.password={{ dwh_oracle_password }}
+jdbc.driver.class=oracle.jdbc.driver.OracleDriver
+jdbc.url=jdbc:oracle:thin:@//{{ dwh_oracle_host }}:{{ dwh_oracle_port }}/{{ dwh_oracle_name }}
+hibernate.dialect=org.hibernate.dialect.OracleDialect
+{% endif %}
+
+pool.init.size=0
+pool.max.active=75
+pool.max.idle=75
+pool.min.idle=0
+pool.max.wait=-1
+pool.validation.query=SELECT 1 AS TEST
+pool.checker.validation.query=SELECT max(1) AS TEST from Role r
+pool.test.on.borrow=true
+pool.test.on.return=false
+pool.test.while.idle=true
+pool.eviction.interval=500
+pool.eviction.batch=4
+
+query.queue.connections=1
+query.queue.consumers=1
+
+event.queue.connections=1
+event.queue.consumers=1
+
+# The username and password of the JMS user
+jms.user=clair
+jms.pass=clair
+
+# The number of JMS connections used to process MT messages
+response.producer.connections=2
+# The total number of concurrent producers (will be divided into connections above)
+response.producers=16
+
+# for testing purposes only. disable inserting events into database.
+disable.event.insert=false
+
+

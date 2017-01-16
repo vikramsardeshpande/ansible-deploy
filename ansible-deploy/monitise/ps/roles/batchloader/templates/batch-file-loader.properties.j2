@@ -1,0 +1,151 @@
+#############################################################################
+#############################################################################
+#############################################################################
+##$$$$$$$$ Cycle File (submitStateEvent) testing configuration $$$$$$$$$$$$##
+#############################################################################
+#############################################################################
+#############################################################################
+
+
+
+## The Database and Hibernate configuration properties can be changed as needed,
+## to properly reference the associated database
+## see files db.postgres.properties, db.hsql.properties and others as examples
+## Database
+#bfl.db.username=clair
+#bfl.db.password=clair
+
+#bfl.db.type=postgres
+#bfl.db.driver.class.name=org.postgresql.Driver
+#bfl.db.url=jdbc:postgresql://localhost:5432/clairdb
+{% if db_vendor == 'oracle' %}
+bfl.db.username={{ oltp_oracle_user }}
+bfl.db.password={{ oltp_oracle_password }}
+bfl.db.type=oracle
+bfl.db.driver.class.name=oracle.jdbc.driver.OracleDriver
+bfl.db.url=jdbc:oracle:thin:@{{ oltp_oracle_host }}:{{ oltp_oracle_port }}/{{ oltp_oracle_name }}
+{% endif %}
+
+{% if db_vendor == 'mssql' %}
+bfl.db.username={{ oltp_mssql_user }}
+bfl.db.password={{ oltp_mssql_password }}
+bfl.db.type=sqlserver
+bfl.db.driver.class.name=net.sourceforge.jtds.jdbc.Driver
+bfl.db.url=jdbc:jtds:sqlserver://{{ oltp_mssql_host }}:{{ oltp_mssql_port }}/{{ oltp_mssql_name }}
+{% endif %}
+
+## DBCP pool configuguration
+bfl.db.pool.init.size=0
+bfl.db.pool.max.active=50
+bfl.db.pool.max.idle=50
+bfl.db.pool.min.idle=0
+bfl.db.pool.validation.query=select max(1) as test from batch_job_instance bji
+bfl.db.pool.test.on.borrow=true
+bfl.db.pool.test.on.return=false
+bfl.db.pool.test.while.idle=false
+bfl.db.pool.eviction.interval=500
+bfl.db.pool.eviction.batch=10
+bfl.db.pool.eviction.timeout=120000
+
+
+## Hibernate
+bfl.hibernate.hbm2ddl.auto=update
+bfl.hibernate.query.substitutions=true 'T', false 'F'
+bfl.hibernate.show_sql=false
+#bfl.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
+#bfl.hibernate.dialect=org.hibernate.dialect.Oracle10gDialect
+{% if db_vendor == 'mssql' %}
+bfl.hibernate.dialect=org.hibernate.dialect.SQLServerDialect
+{% endif %}
+
+
+###################### NodeId
+### Change the following variable to a value that will uniquely identify the BFL host node
+batch.file.loader.nodeId={{ node_id }}
+
+###################### Launch Retry Interval
+### Change the following variable to determine how frequently disabled job launches will be retries (milliseconds)
+batch.launch.retry.interval=300000
+
+###################### Multithreading
+### Change the following variable to true, in order to process multiple files simultaneously
+cycle.file.asynchronous.batch.processing=false
+recon.file.asynchronous.batch.processing=false
+return.file.asynchronous.batch.processing=false
+
+
+
+
+###################### SFTP Connection info for VFS File access
+### These parameters may be changed, to provide credentials for access to a specific
+### SFTP location, if used in the below defined URLS
+### cycle.file.watch.location or cycle.file.done.location.  Note that the SFTP credentials
+### will be used by the batch loader, upon detection of an SFTP url in one of the configurated
+### location URLs.
+### The omission of a value for test.sftp.domain will result in use of the default domain
+###
+test.sftp.domain=
+test.sftp.user=wburge
+test.sftp.password=WB
+
+###################### Filewatcher startup delay, repeat interval
+### These properties can be changed, to control how many milliseconds to delay before first
+### checking the watch directory for a file (cycle.filewatch.delay.millis), and
+### how many milliseconds to delay between subsequent polling of this directory
+###
+cycle.filewatch.delay.millis=2000
+cycle.filewatch.repeat.millis=10000
+
+###################### Error Retry Policy
+### retry.limit includes initial attempt, so values must be 1 or greater
+### setting retry limit to 1 will disable item-level retry
+cycle.file.item.retry.limit=10
+recon.file.item.retry.limit=10
+return.file.item.retry.limit=10
+
+### Setting retry limit to 0 will disable job-level retry
+### The value 288 represents 24 hours of retries every 5 minutes
+### The 5 minute period is configured in the above item
+### "batch.launch.retry.interval"
+cycle.file.job.retry.limit=288
+recon.file.job.retry.limit=288
+return.file.job.retry.limit=288
+
+
+###################### Input file event filtering
+### Setting this flag to true will filter out events for users for which there is no current alertReferance
+cycle.file.filter.alert.references=false
+recon.file.filter.alert.references=false
+return.file.filter.alert.references=false
+
+
+###################### Local file path for staging directory
+###	This property can be changed, and provides a configured location where batch files
+### will be staged, on the local filesystem, for processing
+###
+cycle.file.staging.directory.path={{ batch_data }}/staging
+
+###################### URLs for watch and done locations
+### These properties control the location where the filewatcher will pooll for new/changed
+### files, and the location where processed files will be moved, once processing is completed.
+### These locations are specified as URLS, as the below examples demonstrate.
+###
+### examples:	file:///tmp/somedir/watch
+### 			file:///C:/CS/clairmail-server-4.0/data
+###				sftp://${cycle.sftp.host}/C:/tmp
+###				sftp://${cycle.sftp.host}/var/log/tmp
+###
+###cycle.file.watch.location=file:///${TEMP}/batchtest/files/wausau/watch
+cycle.file.watch.location={{ batch_data }}/watch
+###cycle.file.done.location=file:///${TEMP}/batchtest/files/wausau/done
+cycle.file.done.location={{ batch_data }}/done
+
+######### DO NOT CHANGE PROPERTIES BEYOND THIS POINT
+
+cycle.cycleFileDataload.commit.interval=1
+cycle.file.line.format=recType,billerId,accountNumber,paymentDueDate,amountDue
+recon.reconFileDataload.commit.interval=1
+recon.file.line.format=recType,billerId,accountNumber,paymentDueDate,amountDue,paymentMethod,transactionDate,rejectCode,customerMessage,actionCode,paymentReferenceKey
+return.returnFileDataload.commit.interval=1
+return.file.line.format=recType,billerId,accountNumber,paymentDueDate,paymentMethod,transactionDate,rejectCode,customerMessage,actionCode
+

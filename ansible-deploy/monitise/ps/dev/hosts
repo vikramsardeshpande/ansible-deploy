@@ -1,0 +1,24 @@
+[tag_class_web]
+
+[mvp:children]
+#devapp
+#devtunnel
+#devweb
+tag_class_web
+
+[mvp-frontend:children]
+tag_class_web
+
+[mvp-backend:children]
+tag_class_web
+
+[mvp:vars]
+#install_user=ec2-user
+instance=dev
+instance_password=22dev
+
+##[devapp]
+#10.0.2.105 ansible_ssh_host=127.0.0.1 ansible_ssh_port=6122 #ansible_ssh_key_file=/home/amazon/N-virginia-nov-2016.pem
+
+#[devweb]
+#tag_class_web

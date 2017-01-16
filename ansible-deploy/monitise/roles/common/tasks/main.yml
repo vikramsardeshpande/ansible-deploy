@@ -1,0 +1,69 @@
+---
+# common setup for both frontend and backend servers
+
+#- name: install essential software from base
+#  yum: name={{ item }} state=present
+#  with_items:
+#  - vim
+#  - screen
+#  - man
+#  - zip
+#  - unzip
+#  - httpd
+#  - libselinux-python
+#  - tomcat6
+#  - ftp
+
+#below two lines are commented by Amol(8/24) 
+#- name: disable default tomcat6 service
+#  service: name=tomcat6 enabled=no state=stopped
+
+#- name: generate cm{{ instance }} user password
+#  sudo: no
+#  local_action: shell python -c "from passlib.hash import sha512_crypt; print sha512_crypt.encrypt('{{ instance_password }}')"
+#  register: instance_shadow
+
+- name: setup cm{{ instance }} user
+  #user: name=cm{{ instance }} home={{ monitise_root }} password="{{ instance_shadow.stdout }}"
+  user: name=cm{{ instance }} home={{ monitise_root }} password="{{ instance_password }}"
+        update_password=on_create
+
+- name: ensure cm{{ instance }} can manage services
+  lineinfile: "line='cm{{ instance }} ALL = NOPASSWD: ALL' dest=/etc/sudoers state=present regexp='^cm{{ instance }}'"
+
+- name: setup {{ monitise_root }}
+  file: path={{ monitise_root }} state=directory owner=cm{{ instance }} mode=2755
+
+- name: copy cm{{ instance }} .bash_profile
+  copy: src=bash_profile dest={{ monitise_root }}/.bash_profile owner=cm{{ instance }} mode=660
+
+- name: copy cm{{ instance }} .toprc
+  copy: src=toprc dest={{ monitise_root }}/.toprc owner=cm{{ instance }} mode=660
+
+- name: setup /var/log/monitise
+  file: path=/var/log/monitise state=directory owner=cm{{ instance }} mode=2755
+
+- name: link {{ monitise_root }}/logs to /var/log/monitise
+  file: path={{ monitise_root }}/logs src=/var/log/monitise state=link
+
+- name: setup {{ backup_root }}
+  file: path={{ backup_root }} state=directory owner=cm{{ instance }} mode=2755
+
+- name: setup {{ backup_applications }}
+  file: path={{ backup_applications }} state=directory owner=cm{{ instance }} mode=2755
+
+- name: setup {{ backup_logs }}
+  file: path={{ backup_logs }} state=directory owner=cm{{ instance }} mode=2755
+
+- name: ensure {{ backup_root }} subfolders exist
+  file: path={{ backup_root }}/{{ item }} state=directory owner=cm{{ instance }} mode=2755
+  with_items:
+  - COREBuilds
+  - PSBuilds
+  - thirdparty
+
+- name: generate /etc/httpd/conf.d/monitise.conf
+  template: src=monitise.conf.j2 dest=/etc/httpd/conf.d/monitise.conf
+
+- name: enable httpd service
+  service: name=httpd enabled=yes

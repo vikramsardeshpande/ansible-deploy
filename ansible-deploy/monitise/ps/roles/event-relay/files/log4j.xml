@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE log4j:configuration SYSTEM "log4j.dtd">
+<log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/" debug="false">
+
+   <appender name="CONSOLE" class="org.apache.log4j.ConsoleAppender">
+      <param name="Target" value="System.out"/>
+      <layout class="org.apache.log4j.PatternLayout">
+         <!-- <param name="ConversionPattern" value="%t %d{ISO8601} %-5p [%c{1}:%M] %m%n"/> -->
+         <param name="ConversionPattern" value="%d{ISO8601} %-5p [%c{1}] %m%n"/>
+      </layout>
+   </appender>
+
+    <appender name="FILE" class="org.apache.log4j.DailyRollingFileAppender">
+        <param name="File" value="/var/log/monitise/event-relay/event-relay.log" />
+         <param name="Append" value="true" />
+         <param name="DatePattern" value="'.'yyyy-MM-dd-HH" />
+         <param name="MaxFileSize" value="10" />
+         <param name="MaxBackupIndex" value="25" />
+         <layout class="org.apache.log4j.PatternLayout">
+         <param name="ConversionPattern" value="%d{ISO8601} [%t] %-5p [%c] %m%n" />
+          </layout>
+           </appender>
+
+
+   <!-- ================ -->
+   <!-- Limit categories -->
+   <!-- ================ -->
+
+    <category name="com.clairmail.ws">
+     <priority value="DEBUG"/>
+   </category>
+
+   <category name="com.clairmail">
+     <priority value="DEBUG"/>
+   </category>
+
+   <category name="com.cm.vercors">
+        <priority value="INFO" />
+    </category>
+
+   <category name="com.whirlycott">
+        <priority value="ERROR" />
+    </category>
+
+    <category name="org.apache.velocity.app.VelocityEngine">
+        <priority value="FATAL" />
+    </category>
+
+   <!-- ======================= -->
+   <!-- Setup the Root category -->
+   <!-- ======================= -->
+
+   <root>
+      <priority value="ERROR"/>
+      <appender-ref ref="FILE"/>
+      <appender-ref ref="CONSOLE"/>
+   </root>
+
+
+</log4j:configuration>

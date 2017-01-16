@@ -1,0 +1,10 @@
+---
+# prepare a frontend system
+
+- hosts: mvp-frontend
+  user: "{{ install_user }}"
+  sudo: yes
+  vars_files:
+  - local.yml
+  roles:
+  - role: frontend

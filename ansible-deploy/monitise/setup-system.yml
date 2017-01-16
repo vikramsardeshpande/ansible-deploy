@@ -1,0 +1,20 @@
+---
+# prepare an MVP system
+#
+# This will bring in all prerequisites in order to run an MVP server and
+# establish some common folder structures. You should only need to run this
+# once, or when there are updates to the roles included below.
+#
+
+#- hosts: tag_environment_staging
+- hosts: mvp
+#  user: "{{ install_user }}"
+#  user: ec2-user 
+ # sudo: yes
+  become: yes
+  vars_files:
+  - local.yml
+  roles:
+  - role: local-setup
+  - role: common
+  - role: tomcat

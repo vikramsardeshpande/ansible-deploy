@@ -1,0 +1,19 @@
+---
+# Deploy MVP Server instance with PS customizations
+# Removed getcorebuild and getpsbuild roles due to old jenkins server.-Amolw
+
+- hosts: mvp-backend
+#  user: "{{ install_user }}"   
+  become: yes                      
+  vars_files:
+  - ../local.yml
+  pre_tasks:
+   - include: stop.yml
+  roles: 
+  - { role: cms, tags: ['cms'] }
+  - { role: csr, tags: ['csr'] }
+#  - { role: batchloader, tags: ['batchloader'] }
+#  - { role: tokenmanager, tags: ['tokenmanager'] }
+#  - { role: event-relay, tags: ['event-relay'] }
+  post_tasks:
+  - include: start.yml

@@ -1,0 +1,31 @@
+---
+# To stop the monitise related services 
+# command to use to stop the services on backend servers
+# ansible-playbook  -k -K stop-all-services.yml -i ps/dev/hosts
+# command to use to stop the services on fronend servers
+# ansible-playbook  -k -K stop-all-services.yml -t frontend -i ps/dev/hosts
+
+- hosts: mvp
+  user: cm{{ instance }}
+  sudo: yes
+  tasks:
+  - name: stop the apache service 
+    service: name=httpd state=stopped 
+    tags:
+    - frontend
+  - name: stop the tomcat service 
+    service: name=tomcat state=stopped 
+    tags:
+    - frontend
+#  - name: stop the event-relay service 
+#   service: name=event-relay state=stopped 
+#  - name: stop the redis-sentinel service 
+#    service: name=redis-sentinel state=stopped 
+#  - name: stop the redis service 
+#    service: name=redis state=stopped 
+  - name: stop the simulator service 
+    service: name=smppsim state=stopped 
+  - name: stop the cms service 
+    service: name=cms state=stopped 
+  - name: stop the hornetq service 
+    service: name=hornetq state=stopped 

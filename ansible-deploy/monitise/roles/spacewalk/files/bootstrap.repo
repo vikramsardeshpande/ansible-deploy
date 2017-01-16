@@ -1,0 +1,6 @@
+[centos-x86_64-server-6-BOOTSTRAP]
+name=CentOS x86_64 server 6 - BOOTSTRAP
+baseurl=http://mai02-swalk-01v.clairmail.local/repo/centos-x86_64-server-6-bootstrap
+enabled=1
+gpgcheck=1
+cost=99999

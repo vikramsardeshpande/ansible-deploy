@@ -1,0 +1,18 @@
+---
+# Below environment variables are applicable to all frontend-servers
+
+
+connection_protocol: http
+server_http_address: localhost
+server_http_port: 80
+
+banking_rest_api_base_package: banking_rest_api.war
+banking_rest_api_solution_package:
+
+mobile_base_package: mobile.war
+mobile_solution_package: 
+
+enrollment_base_package: cmClientEnrollmentApp.war
+enrollment_solution_package:
+
+webclient_solution_package: webclient.war

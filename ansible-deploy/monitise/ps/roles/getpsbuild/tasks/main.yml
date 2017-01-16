@@ -1,0 +1,10 @@
+---
+# generic way to push PS builds to target systems:
+#   rsync from vault to local system
+#   rsync from local system to target
+
+- name: rsync from vault to local system
+  local_action: shell rsync -a {{ aduser }}@mai01-build-02v:{{ psbuild_path }} {{ localcache }}/PSBuilds/{{ psbuild_number }}
+
+- name: copy from local system to remote
+  copy: src={{ localcache }}/PSBuilds/{{ psbuild_number }}/ dest={{ backup_root }}/PSBuilds/{{ psbuild_number }}/ force=no

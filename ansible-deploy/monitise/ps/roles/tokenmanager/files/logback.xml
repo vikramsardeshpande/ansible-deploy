@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<configuration scan="true" scanPeriod="60 seconds">
+
+	<property resource="logging.properties"/>
+	<property name="ENABLE_CONSOLE" value="${ENABLE_CONSOLE:-false}"/>
+
+	<!-- Setup standard appenders -->
+	<if condition='property("ENABLE_CONSOLE").equalsIgnoreCase("true")'>
+		<then>
+			<appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+				<encoder>
+					<Pattern>%date{HH:mm:ss.SSS} [%thread] %-5level %logger{0}:%method@%line ${MDC} - %msg%n%exception</Pattern>
+				</encoder>
+			</appender>
+
+			<root>
+				<appender-ref ref="CONSOLE" />
+			</root>
+		</then>
+	</if>
+
+    <!-- ================================= -->
+    <!-- Preserve messages in a local file -->
+    <!-- ================================= -->
+
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <File>${catalina.base}/logs/token-manager.log</File>
+
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <FileNamePattern>${catalina.base}/logs/token-manager.log.%d{yyyy-MM-dd-HH}.gz</FileNamePattern>
+        </rollingPolicy>
+
+        <encoder>
+            <Pattern>%date [%thread] %-5level %logger{36} ${MDC} - %msg%n%exception{3}</Pattern>
+        </encoder>
+    </appender>
+
+    <!-- ================================= -->
+    <!-- Preserve messages in a local file -->
+    <!-- ================================= -->
+
+    <appender name="ERROR" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<file>${catalina.base}/logs/token-manager-error.log</file>
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<fileNamePattern>${catalina.base}/logs/token-manager-error.log.%d{yyyy-MM-dd-HH}.gz</fileNamePattern>
+		</rollingPolicy>
+
+		<filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+			<level>ERROR</level>
+		</filter>
+
+		<encoder>
+			<pattern>%date [%thread] %-5level %logger:%method@%line ${MDC_ERROR} - %msg%n%xException</pattern>
+		</encoder>
+	</appender>
+    
+    
+    <!-- ========================================== -->
+    <!-- Preserve security messages in a local file -->
+    <!-- ========================================== -->
+
+    <appender name="SECURITY_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <File>${catalina.base}/logs/token-manager-security.log</File>
+
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+        	<FileNamePattern>${catalina.base}/logs/token-manager-security.log.%d{yyyy-MM-dd-HH}.gz</FileNamePattern>
+        </rollingPolicy>
+
+        <encoder>
+            <Pattern>%date [%thread] %-5level %logger{36} ${MDC_SECURITY} - %msg%n%exception{3}</Pattern>
+        </encoder>
+    </appender>
+
+    <!-- ================ -->
+    <!-- Limit categories -->
+    <!-- ================ -->
+
+    <logger name="com.clairmail.service.token" level="${BANKING_LEVEL:-DEBUG}" />
+    
+    <!-- ======================= -->
+    <!-- Setup the Root category -->
+    <!-- ======================= -->
+
+    <root level="${ROOT_LEVEL:-TRACE}">
+        <appender-ref ref="FILE" />
+        <appender-ref ref="ERROR" />
+        <appender-ref ref="SECURITY_FILE" />
+    </root>
+    
+</configuration>

@@ -1,0 +1,37 @@
+---
+# install hornetq and setup as a service
+# still requires confugiration via one of the hornetq-* roles
+
+#- name: obtain hornetq-2.2.14.Final from mai01-build-02v
+#  sudo: no
+#  local_action: shell rsync -a {{ aduser }}@mai01-build-02v:/share/jenkins/thirdparty/hornetq-2.2.14.Final.tar.gz {{ localcache }}/thirdparty
+#  when: internal == 'yes'
+
+- name: copy hornetq to server
+  copy: src={{ localcache }}/thirdparty/hornetq-2.2.14.Final.tar.gz dest={{ backup_root }}/thirdparty
+
+- name: extract to /opt
+  command: /bin/tar --no-same-owner -xf {{ backup_root }}/thirdparty/hornetq-2.2.14.Final.tar.gz
+           chdir=/opt
+           creates=/opt/hornetq-2.2.14.Final
+
+- name: setup {{ monitise_root }}/hornetq
+  file: path={{ monitise_root }}/hornetq state=directory owner=cm{{ instance }} mode=2750
+
+- name: setup /var/log/monitise/hornetq
+  file: path=/var/log/monitise/hornetq state=directory owner=cm{{ instance }} mode=2755
+
+- name: setup hornetq data direcoty
+  file: path={{ hqdata_root }} state=directory owner=cm{{ instance }} mode=2750
+
+- name: link /opt/hornetq-2.2.14.Final/logs to /var/log/monitise/hornetq
+  file: path=/opt/hornetq-2.2.14.Final/logs src=/var/log/monitise/hornetq state=link
+
+- name: generate /etc/init.d/hornetq
+  template: src=hornetq.init.j2 dest=/etc/init.d/hornetq mode=755
+
+- name: register hornetq as a service
+  command: /sbin/chkconfig --add hornetq
+
+- name: enable hornetq service at boot
+  service: name=hornetq enabled=yes

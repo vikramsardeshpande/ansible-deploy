@@ -1,0 +1,187 @@
+<?xml version="1.0"?>
+<configuration xmlns="urn:hornetq" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:hornetq /schema/hornetq-configuration.xsd">
+
+    <clustered>false</clustered>
+    <paging-directory>${data.dir:../data}/paging</paging-directory>
+    <bindings-directory>${data.dir:../data}/bindings</bindings-directory>
+    <journal-directory>${data.dir:../data}/journal</journal-directory>
+    <journal-min-files>10</journal-min-files>
+    <large-messages-directory>${data.dir:../data}/large-messages</large-messages-directory>
+    <backup>false</backup>
+    <shared-store>true</shared-store>
+    <failover-on-shutdown>false</failover-on-shutdown>
+    <security-enabled>false</security-enabled>
+
+    <connectors>
+        <connector name="netty-connector">
+            <factory-class>org.hornetq.core.remoting.impl.netty.NettyConnectorFactory</factory-class>
+            <param key="port" value="5445"/>
+        </connector>
+    </connectors>
+
+    <acceptors>
+        <acceptor name="netty-acceptor">
+            <factory-class>org.hornetq.core.remoting.impl.netty.NettyAcceptorFactory</factory-class>
+            <param key="port" value="5445"/>
+        </acceptor>
+    </acceptors>
+
+    <address-settings>
+        <address-setting match="jms.queue.com.clairmail.MOQueue">
+            <dead-letter-address>jms.queue.DLQ</dead-letter-address>
+            <expiry-address>jms.queue.ExpiryQueue</expiry-address>
+            <max-delivery-attempts>3</max-delivery-attempts>
+            <redelivery-delay>1000</redelivery-delay>
+        </address-setting>
+        <address-setting match="jms.queue.com.clairmail.MTQueue">
+            <dead-letter-address>jms.queue.com.clairmail.MTRedelivery</dead-letter-address>
+            <expiry-address>jms.queue.ExpiryQueue</expiry-address>
+            <max-delivery-attempts>5</max-delivery-attempts>
+            <redelivery-delay>10000</redelivery-delay>
+        </address-setting>
+        <address-setting match="jms.queue.com.clairmail.MTRedelivery">
+            <dead-letter-address>jms.queue.DLQ</dead-letter-address>
+            <expiry-address>jms.queue.ExpiryQueue</expiry-address>
+            <max-delivery-attempts>3</max-delivery-attempts>
+            <redelivery-delay>1000</redelivery-delay>
+        </address-setting>
+        <address-setting match="jms.queue.com.clairmail.EHCacheQueue">
+            <dead-letter-address>jms.queue.DLQ</dead-letter-address>
+            <expiry-address>jms.queue.ExpiryQueue</expiry-address>
+            <max-delivery-attempts>3</max-delivery-attempts>
+            <redelivery-delay>1000</redelivery-delay>
+        </address-setting>
+        <address-setting match="jms.queue.com.clairmail.EventLogRequestQueue">
+            <dead-letter-address>jms.queue.DLQ</dead-letter-address>
+            <expiry-address>jms.queue.ExpiryQueue</expiry-address>
+            <max-delivery-attempts>3</max-delivery-attempts>
+            <redelivery-delay>1000</redelivery-delay>
+        </address-setting>
+        <address-setting match="jms.queue.com.clairmail.EventQueue">
+            <dead-letter-address>jms.queue.DLQ</dead-letter-address>
+            <expiry-address>jms.queue.ExpiryQueue</expiry-address>
+            <max-delivery-attempts>3</max-delivery-attempts>
+            <redelivery-delay>1000</redelivery-delay>
+            <max-size-bytes>104857600</max-size-bytes>
+            <page-size-bytes>10485760</page-size-bytes>
+            <address-full-policy>PAGE</address-full-policy>
+        </address-setting>
+        <address-setting match="jms.topic.com.clairmail.EventTopic">
+            <dead-letter-address>jms.queue.DLQ</dead-letter-address>
+            <expiry-address>jms.queue.ExpiryQueue</expiry-address>
+            <max-delivery-attempts>3</max-delivery-attempts>
+            <redelivery-delay>1000</redelivery-delay>
+            <max-size-bytes>104857600</max-size-bytes>
+            <page-size-bytes>10485760</page-size-bytes>
+            <address-full-policy>PAGE</address-full-policy>
+        </address-setting>
+        <address-setting match="jms.topic.com.clairmail.SyncTopic">
+            <dead-letter-address>jms.queue.DLQ</dead-letter-address>
+            <expiry-address>jms.queue.ExpiryQueue</expiry-address>
+            <max-delivery-attempts>3</max-delivery-attempts>
+            <redelivery-delay>1000</redelivery-delay>
+        </address-setting>
+        <address-setting match="jms.topic.com.clairmail.EventLogReplyTopic">
+            <dead-letter-address>jms.queue.DLQ</dead-letter-address>
+            <expiry-address>jms.queue.ExpiryQueue</expiry-address>
+            <max-delivery-attempts>3</max-delivery-attempts>
+            <redelivery-delay>1000</redelivery-delay>
+            <max-size-bytes>104857600</max-size-bytes>
+            <page-size-bytes>10485760</page-size-bytes>
+            <address-full-policy>PAGE</address-full-policy>
+        </address-setting>
+        <address-setting match="jms.topic.com.clairmail.EHCacheTopic">
+            <dead-letter-address>jms.queue.DLQ</dead-letter-address>
+            <expiry-address>jms.queue.ExpiryQueue</expiry-address>
+            <max-delivery-attempts>3</max-delivery-attempts>
+            <redelivery-delay>1000</redelivery-delay>
+        </address-setting>
+        <address-setting match="jms.queue.com.monitise.PreferencesQueue">
+            <dead-letter-address>jms.queue.DLQ</dead-letter-address>
+            <expiry-address>jms.queue.ExpiryQueue</expiry-address>
+            <max-delivery-attempts>3</max-delivery-attempts>
+            <redelivery-delay>1000</redelivery-delay>
+            <max-size-bytes>104857600</max-size-bytes>
+            <page-size-bytes>10485760</page-size-bytes>
+            <address-full-policy>PAGE</address-full-policy>
+        </address-setting>
+        <address-setting match="jms.queue.com.monitise.EventEngineQueue">
+            <dead-letter-address>jms.queue.DLQ</dead-letter-address>
+            <expiry-address>jms.queue.ExpiryQueue</expiry-address>
+            <max-delivery-attempts>3</max-delivery-attempts>
+            <redelivery-delay>1000</redelivery-delay>
+            <max-size-bytes>104857600</max-size-bytes>
+            <page-size-bytes>10485760</page-size-bytes>
+            <address-full-policy>PAGE</address-full-policy>
+        </address-setting>
+        <address-setting match="jms.queue.com.monitise.AlertQueue">
+            <dead-letter-address>jms.queue.DLQ</dead-letter-address>
+            <expiry-address>jms.queue.ExpiryQueue</expiry-address>
+            <max-delivery-attempts>3</max-delivery-attempts>
+            <redelivery-delay>1000</redelivery-delay>
+            <max-size-bytes>104857600</max-size-bytes>
+            <page-size-bytes>10485760</page-size-bytes>
+            <address-full-policy>PAGE</address-full-policy>
+        </address-setting>
+        <address-setting match="jms.queue.com.monitise.SchedulerInputQueue">
+            <dead-letter-address>jms.queue.DLQ</dead-letter-address>
+            <expiry-address>jms.queue.ExpiryQueue</expiry-address>
+            <max-delivery-attempts>30</max-delivery-attempts>
+            <redelivery-delay>1000</redelivery-delay>
+            <max-size-bytes>104857600</max-size-bytes>
+            <page-size-bytes>10485760</page-size-bytes>
+            <address-full-policy>PAGE</address-full-policy>
+        </address-setting>
+        <address-setting match="jms.queue.DLQ">
+            <max-size-bytes>104857600</max-size-bytes>
+            <page-size-bytes>10485760</page-size-bytes>
+        </address-setting>
+        <address-setting match="jms.queue.ExpiryQueue">
+            <max-size-bytes>104857600</max-size-bytes>
+            <page-size-bytes>10485760</page-size-bytes>
+        </address-setting>
+    </address-settings>
+
+    <security-settings>
+        <!--security for clairmail queue-->
+        <security-setting match="jms.queue.com.clairmail.#">
+            <permission type="send" roles="cmserver"/>
+            <permission type="consume" roles="cmserver"/>
+            <permission type="createDurableQueue" roles="cmserver"/>
+            <permission type="deleteDurableQueue" roles="cmserver"/>
+            <permission type="createNonDurableQueue" roles="cmserver"/>
+            <permission type="deleteNonDurableQueue" roles="cmserver"/>
+        </security-setting>
+        <!--security for clairmail topics-->
+        <security-setting match="jms.topic.com.clairmail.#">
+            <permission type="send" roles="cmserver"/>
+            <permission type="consume" roles="cmserver"/>
+            <permission type="createDurableQueue" roles="cmserver"/>
+            <permission type="deleteDurableQueue" roles="cmserver"/>
+            <permission type="createNonDurableQueue" roles="cmserver"/>
+            <permission type="deleteNonDurableQueue" roles="cmserver"/>
+        </security-setting>
+        <!--security for MVP-MME queues -->
+        <security-setting match="jms.queue.com.monitise.#">
+            <permission type="send" roles="mme"/>
+            <permission type="consume" roles="mme"/>
+            <permission type="createDurableQueue" roles="mme"/>
+            <permission type="deleteDurableQueue" roles="mme"/>
+            <permission type="createNonDurableQueue" roles="mme"/>
+            <permission type="deleteNonDurableQueue" roles="mme"/>
+        </security-setting>
+        <!-- security setting required to allow management from admin console -->
+        <security-setting match="jms.queue.hornetq.management">
+            <permission type="manage" roles="cmserver,mme"/>
+        </security-setting>
+        <!-- catch-all for the rest -->
+        <security-setting match="#">
+            <permission type="createNonDurableQueue" roles="cmserver,mme"/>
+            <permission type="deleteNonDurableQueue" roles="cmserver,mme"/>
+            <permission type="consume" roles="cmserver,mme"/>
+            <permission type="send" roles="cmserver,mme"/>
+        </security-setting>
+    </security-settings>
+    <cluster-user>HORNETQ.CLUSTER.ADMIN.USER</cluster-user>
+    <cluster-password>clair</cluster-password>
+</configuration>

@@ -1,0 +1,1429 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:p="http://www.springframework.org/schema/p"
+       xmlns:util="http://www.springframework.org/schema/util" xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+        http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.0.xsd
+        http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd">
+
+  <!-- VISA change:START > <import resource="applicationContext.Visa-IssuerService.xml" /> < VISA change:END -->
+
+  <!-- * * * * * * * * * * * * * * INFRASTRUCTURE COMPONENTS * * * * * * * * * * * * * * -->
+
+  <!-- This just stores the app context in a static way such that the Non-spring aware classes (like Hibernate custom persister classes) can get access 
+    to it, workaround suggested by: http://forum.springframework.org/showthread.php?t=21712 -->
+    <bean id="staticSpring" class="com.clairmail.service.StaticSpringContext">
+        <property name="currentNodeId" value="${node.id}" />
+    </bean>
+
+
+  <!-- JMS Management Utility class -->
+    <bean id="jmsManagementUtil" class="com.clairmail.jms.hornetq.JmsManagementUtil">
+        <property name="queueNames">
+            <list>
+                <value>com.clairmail.MTQueue</value>
+                <value>com.clairmail.MOQueue</value>
+            </list>
+        </property>
+        <property name="managementQueueName" value="${management.queue.name}" />
+        <property name="connectionFactory" ref="connectionFactory" />
+        <property name="userName" value="${jms.user}" />
+        <property name="userPass" value="${jms.pass}" />
+    </bean>
+
+  <!-- * * * * * * * * * * * * * SERVICE DECLARATIONS A to Z * * * * * * * * * * * * * -->
+
+  <!-- .................... Address Book Service ..................... -->
+  <!-- API IS DEPRECATED <bean id="addressBookService" class="com.clairmail.service.endpoint.AddressBookServiceImpl"> <property name="authorizationService" 
+    ref="authorizationService" /> <property name="prefix" value="cm" /> <property name="category" value="titanAddressBook" /> <property name="replyMailDomain" 
+    value="${mail.domain}" /> </bean> <bean id="addressBookExportFactory" class="com.clairmail.service.endpoint.AddressBookExportFactoryImpl" singleton="true"> 
+    <property name="exportServices"> <map> <entry> <key> <value>vCard_V3</value> </key> <ref local="vCardV3Export" /> </entry> <entry> <key> <value>mozilla_ldif</value> 
+    </key> <ref local="mozillaLdifExport" /> </entry> <entry> <key> <value>outlook_csv</value> </key> <ref local="outlookCsvExport" /> </entry> <entry> <key> 
+    <value>outlookExpress_csv</value> </key> <ref local="outlookExpressCsvExport" /> </entry> </map> </property> </bean> <bean id="vCardV3Export" class="com.clairmail.service.endpoint.VCardV3Export"> 
+    </bean> <bean id="mozillaLdifExport" class="com.clairmail.service.endpoint.MozillaLDIFExport"> </bean> <bean id="outlookCsvExport" class="com.clairmail.service.endpoint.OutlookCSVExport"> 
+    </bean> <bean id="outlookExpressCsvExport" class="com.clairmail.service.endpoint.OutlookCSVExport"> <property name="separator" value=";" /> </bean> -->
+
+  <!-- ....................... Alert Service ......................... -->
+
+    <bean id="alertService" class="com.clairmail.service.alert.AlertServiceImpl">
+        <property name="messageSenderService" ref="messageSenderServiceImpl" />
+        <property name="personAdministrationService" ref="personService" />
+    </bean>
+    
+    <bean id="mvpAlertService" class="com.clairmail.service.alert.mvp.MVPAlertServiceImpl">
+        <property name="messageSenderService" ref="messageSenderServiceImpl" />
+        <property name="mvpAlertServiceProvider" ref="mvpXmlAlertServiceProvider" />
+    	<property name="tenantResolutionService" ref="tenantResolutionService" />
+    	<property name="mvpAlertHelper" ref="mvpAlertHelper" />
+    	<property name="mvpMacroHelper" ref="mvpMacroHelper" />
+    </bean>
+    
+    <bean id="mvpMacroHelper" class="com.clairmail.service.alert.mvp.MVPMacroHelper">
+        <property name="macroService" ref="macroService" />
+        <property name="personAdministrationService" ref="personService" />
+    </bean>
+    
+    <bean id="mvpAlertHelper" class="com.clairmail.service.alert.mvp.MVPAlertHelper">
+        <property name="alertDao" ref="conditionalAlertsDao" />
+        <property name="localeResolutionService" ref="localeResolutionService" />
+        <property name="messageSource" ref="alertConfMsgSource" />
+        <property name="mvpAlertServiceProvider" ref="mvpXmlAlertServiceProvider" />
+    </bean>
+
+  <!-- .................. Authentication Service ..................... -->
+
+    <bean id="authenticationService" class="com.clairmail.service.person.AuthenticationServiceImpl">
+        <property name="personDao" ref="personDao" />
+        <property name="personPrincipalDao" ref="personPrincipalDao" />
+        <property name="encryptionService" ref="encryptionService" />
+        <property name="phoneService" ref="phoneService" />
+        <property name="maxFailedLoginAttempts" value="${max.failed.login.attempts}" />
+        <property name="userAccountLockingFeature" value="${user.account.locking.feature}" />
+    </bean>
+
+  <!-- ................... Authorization Service ..................... -->
+
+    <bean id="authorizationService" class="com.clairmail.service.authorization.AuthorizationServiceImpl">
+        <property name="aclEntryDao" ref="aclEntryDao" />
+        <property name="cmServiceEndpointDao" ref="cmServiceEndpointDao" />
+        <property name="personDao" ref="personDao" />
+        <property name="permissionDao" ref="permissionDao" />
+        <property name="personPrincipalDao" ref="personPrincipalDao" />
+        <property name="principalDao" ref="principalDao" />
+        <property name="cmNamedResourceDao" ref="cmNamedResourceDao" />
+        <property name="groupDao" ref="groupDao" />
+        <property name="authenticationService" ref="authenticationService" />
+        <property name="maxFailedLoginAttempts" value="${max.failed.login.attempts}" />
+        <property name="userAccountLockingFeature" value="${user.account.locking.feature}" />
+    </bean>
+
+  <!-- ........... Authorization Administration Service ............. -->
+
+    <bean id="authorizationAdminService" class="com.clairmail.service.authorization.AuthorizationAdministrationServiceImpl">
+        <property name="aclEntryDao" ref="aclEntryDao" />
+        <property name="cmNameDao" ref="cmNameDao" />
+        <property name="groupDao" ref="groupDao" />
+        <property name="permissionDao" ref="permissionDao" />
+        <property name="personPrincipalDao" ref="personPrincipalDao" />
+        <property name="principalDao" ref="principalDao" />
+        <property name="roleDao" ref="roleDao" />
+        <property name="cmNamedResourceDao" ref="cmNamedResourceDao" />
+    </bean>
+
+  <!-- .................. BatchData Service ..................... -->
+
+    <bean id="batchDataService" class="com.clairmail.service.batchdata.BatchDataServiceImpl">
+        <property name="batchDataDao" ref="batchDataDao" />
+    </bean>
+
+  <!-- .................. Carrier Service ..................... -->
+
+    <bean id="carrierService" class="com.clairmail.service.carrier.CarrierAdministrationServiceImpl">
+        <property name="carrierDao" ref="carrierDao" />
+    </bean>
+  <!-- ................. Conditional Alerts Service ................ -->
+    <bean id="alertMessageSource" class="com.clairmail.rm.client.TenantAwareResourceManagerMessageSource">
+        <property name="names">
+            <list>
+                <value>messages_alerts.properties</value>
+        <!-- VISA change:START > <value>visa-messages_alerts.properties</value> < VISA change:END -->
+            </list>
+        </property>
+        <property name="resourceManager" ref="resourceManager" />
+    </bean>
+
+  <!-- ................. Conditional Alerts Service configuration alert.properties ................ -->
+    <bean id="alertConfMsgSource" class="com.clairmail.rm.client.TenantAwareResourceManagerMessageSource">
+        <property name="names">
+            <list>
+                <value>alert.properties</value>
+        <!-- VISA change:START > <value>visa-alert.properties</value> < VISA change:END -->
+            </list>
+        </property>
+        <property name="resourceManager" ref="resourceManager" />
+    </bean>
+
+    <bean id="conditionalAlertService" class="com.clairmail.service.alert.ConditionalAlertServiceImpl">
+        <property name="alertDao" ref="conditionalAlertsDao" />
+        <property name="conditionalAlertServiceProvider" ref="XMLConditionalAlertServiceProvider" />
+        <property name="personService" ref="personService"></property>
+        <property name="txAlertService" ref="txAlertService"></property>
+        <property name="errorNotificationCount" value="1" />
+        <property name="localeResolutionService" ref="localeResolutionService" />
+        <property name="messageSource" ref="alertConfMsgSource" />
+        <property name="productMetadataService" ref="productMetaDataService" />
+        <property name="enrollmentFlowService" ref="enrollmentFlowService" />
+    <!-- VISA change:START > <property name="preProcessors"> <list> <ref local="visaConditionalAlertPreProcessor" /> </list> </property> < VISA change:END -->
+    </bean>
+
+    <bean id="txAlertService" class="com.clairmail.service.alert.TransactionalAlertServiceImpl">
+        <property name="alertDao" ref="conditionalAlertsDao" />
+    </bean>
+
+    <bean id="XMLConditionalAlertServiceProvider" class="com.clairmail.service.alert.XMLConditionalAlertServiceProviderImpl">
+        <property name="localeResolutionService" ref="localeResolutionService" />
+        <property name="messageSource" ref="alertConfMsgSource" />
+    </bean>
+    
+    <bean id="mvpXmlAlertServiceProvider" class="com.clairmail.service.alert.MVPXmlAlertServiceProviderImpl" parent="XMLConditionalAlertServiceProvider" />
+
+    <bean id="alertSenderMsgSource" class="com.clairmail.rm.client.TenantAwareResourceManagerMessageSource">
+        <property name="names">
+            <list>
+                <value>cmservice.properties</value>
+            </list>
+        </property>
+        <property name="resourceManager" ref="resourceManager" />
+    </bean>
+
+
+
+    <bean id="conditionalAlertSender" class="com.clairmail.service.alert.ConditionalAlertSenderServiceImpl" init-method="init" destroy-method="unload">
+        <property name="conditionalAlertService" ref="conditionalAlertService" />
+        <property name="resourceManager" ref="resourceManager" />
+        <property name="messageSenderService" ref="messageSenderServiceImpl" />
+        <property name="conditionalAlertServiceProvider" ref="XMLConditionalAlertServiceProvider" />
+        <property name="localeResolutionService" ref="localeResolutionService" />
+    <!-- The time in milliseconds to sleep between intervals -->
+        <property name="throttleSleep" value="300" />
+    <!-- The max number of messages to submit per interval -->
+        <property name="throttleInterval" value="10" />
+        <property name="tenantResolutionService" ref="tenantResolutionService" />
+        <property name="messageSource" ref="alertSenderMsgSource" />
+        <property name="sessionLength" value="${web.ui.simple.session.length}" />
+        <property name="personService" ref="personService" />
+        <property name="webClientService" ref="webClientService" />
+        <property name="statusObserver" ref="eventDispatcher" />
+        <property name="productMetadataService" ref="productMetaDataService" />
+    </bean>
+
+    <bean id="delayQueueProcessor" class="com.clairmail.service.alert.DelayQueueProcessorImpl" init-method="init" destroy-method="unload">
+        <property name="conditionalAlertService" ref="conditionalAlertService" />
+        <property name="scheduleInterval" value="300000"></property>
+        <property name="statusObserver" ref="eventDispatcher" />
+    </bean>
+
+  <!-- .................... Command Dispatcher ...................... -->
+
+    <bean id="commandDispatcher" class="com.clairmail.command.CommandDispatcherImpl" init-method="init" destroy-method="unload">
+        <property name="serviceMap">
+            <map>
+                <entry key="com.clairmail.command.GetDiscoEventCommand" value-ref="discoEventService" />
+                <entry key="com.clairmail.command.InvokeMethodCommand" value-ref="remoteWebClientService" />
+                <entry key="com.clairmail.command.CreateOrUpdateUserCommand" value-ref="personRegistrationService" />
+                <entry key="com.clairmail.command.SearchUsersCommand" value-ref="personService" />
+                <entry key="com.clairmail.command.CreateOrUpdateProfileCommand" value-ref="personRegistrationService" />
+                <entry key="com.clairmail.command.AddSourceAddressCommand" value-ref="personRegistrationService" />
+                <entry key="com.clairmail.command.DeleteSourceAddressCommand" value-ref="personRegistrationService" />
+                <entry key="com.clairmail.command.VerifySourceAddressCommand" value-ref="personRegistrationService" />
+                <entry key="com.clairmail.command.CompleteEscalatedAuthenticationCommand" value-ref="escalatingAuthenticationService" />
+                <entry key="com.clairmail.command.UnregisterUserCommand" value-ref="personRegistrationService" />
+                <entry key="com.clairmail.command.GetUserAndProfileCommand" value-ref="personService" />
+                <entry key="com.clairmail.command.CheckVerificationCodeCommand" value-ref="verificationService" />
+                <entry key="com.clairmail.command.SendAlertCommand" value-ref="alertService" />
+                <entry key="com.clairmail.command.MVPSendAlertCommand" value-ref="mvpAlertService" />
+                <entry key="com.clairmail.command.SendOTPCommand" value-ref="otpService" />
+                <entry key="com.clairmail.command.CheckOTPCommand" value-ref="otpService" />
+                <entry key="com.clairmail.command.SetOptInCommand" value-ref="personRegistrationService" />
+                <entry key="com.clairmail.command.CreateOrUpdateSourceAddressCommand" value-ref="personRegistrationService" />
+                <entry key="com.clairmail.command.GetDisconnectedPhoneNumbersCommand" value-ref="discoEventService" />
+                <entry key="com.clairmail.command.GetAlertTypeListCommand" value-ref="conditionalAlertService" />
+                <entry key="com.clairmail.command.GetAlertRegistrationListCommand" value-ref="conditionalAlertService" />
+                <entry key="com.clairmail.command.DeleteAlertRegistrationCommand" value-ref="conditionalAlertService" />
+                <entry key="com.clairmail.command.SendConditionalAlertCommand" value-ref="conditionalAlertService" />
+                <entry key="com.clairmail.command.UpdateAlertRegistrationCommand" value-ref="conditionalAlertService" />
+                <entry key="com.clairmail.command.CreateAlertRegistrationCommand" value-ref="conditionalAlertService" />
+                <entry key="com.clairmail.command.GetAlertInstanceListCommand" value-ref="conditionalAlertService" />
+                <entry key="com.clairmail.command.GetAlertInstanceCommand" value-ref="conditionalAlertService" />
+                <entry key="com.clairmail.command.SetEmailDeliveryStatusCommand" value-ref="emailServerComponent" />
+                <entry key="com.clairmail.command.GetDNDListCommand" value-ref="conditionalAlertService" />
+                <entry key="com.clairmail.command.SetDNDListCommand" value-ref="personService" />
+                <entry key="com.clairmail.command.GetAlertRegistrationListByAlertReferenceCommand" value-ref="conditionalAlertService" />
+                <entry key="com.clairmail.command.MergeAlertRegistrationByListCommand" value-ref="conditionalAlertService" />
+                <entry key="com.clairmail.command.MergeAlertRegistrationsByCriteriaCommand" value-ref="conditionalAlertService" />
+                <entry key="com.clairmail.command.UpdateSourceAddressCommand" value-ref="personRegistrationService" />
+                <entry key="com.clairmail.command.AuthorizeUserCommand" value-ref="authorizationService" />
+                <entry key="com.clairmail.command.SubmitStateEventCommand" value-ref="conversationalStateService" />
+                <entry key="com.clairmail.command.StateModelRegistrationCommand" value-ref="conversationalStateService" />
+                <entry key="com.clairmail.command.UnregisterUserFromStateModelCommand" value-ref="conversationalStateService" />
+                <entry key="com.clairmail.command.GetCarrierListCommand" value-ref="carrierService" />
+                <entry key="com.clairmail.command.GetDeployedProductCommand" value-ref="productMetaDataService" />
+                <entry key="com.clairmail.command.GetEnrolledProductsCommand" value-ref="productEnrollmentService" />
+                <entry key="com.clairmail.command.GetUserAcceptedTandCCommand" value-ref="termsAndConditionsService" />
+                <entry key="com.clairmail.command.ProductEnrollmentFlowCommand" value-ref="productCommandServiceLoader" />
+                <entry key="com.clairmail.command.MfaSystemInvokationCommand" value-ref="mfaMessageManagerMock" />
+                <entry key="com.clairmail.command.GetEventLogCommand" value-ref="eventLogMessageReceiver" />
+                <entry key="com.clairmail.command.ProcessMessageCommand" value-ref="messageManager" />
+                <entry key="com.clairmail.command.GetExtendedAuthParametersCommand" value-ref="webClientService" />
+                <entry key="com.clairmail.command.ValidateExtendedAuthParametersCommand" value-ref="webClientService" />
+                <!-- 4.4 compatibility -->
+                <entry key="com.clairmail.command.FeatureEligibilityCommand" value-ref="featureService" />  
+                <entry key="com.clairmail.command.GetFeatureEnrollmentCommand" value-ref="featureService" />                    
+                <entry key="com.clairmail.command.GetTermsAndConditionsProvisionCommand"  value-ref="featureService" />
+                <entry key="com.clairmail.command.AcceptTermsAndConditionsCommand"  value-ref="featureService" />                 
+            </map>
+        </property>
+        <property name="statusObserver" ref="eventDispatcher" />
+    </bean>
+
+  <!-- ................. Correlation Id Alias Service ................... -->
+
+    <bean id="correlationIdAliasService" class="com.clairmail.service.messaging.CorrelationIdAliasServiceImpl">
+        <property name="correlationIdAliasDao" ref="correlationIdAliasDao" />
+        <property name="passwordStrengthService" ref="passwordStrengthService" />
+    </bean>
+
+  <!-- .................. Database Schema Management .................... -->
+    <bean id="schemaAutorun" class="com.clairmail.service.initial.DatabaseSchemaManagerAutoRun">
+        <property name="databaseSchemaManager" ref="databaseSchemaManager" />
+    </bean>
+
+    <bean id="databaseSchemaManagerAutoRun" lazy-init="false" class="com.clairmail.service.initial.DatabaseSchemaManagerAutoRun">
+        <property name="databaseSchemaManager" ref="databaseSchemaManager" />
+    </bean>
+
+    <bean id="databaseSchemaManager" class="com.clairmail.service.initial.DatabaseSchemaManagerImpl">
+        <property name="localSessionFactoryBean" ref="&amp;clairSessionFactory" />
+        <property name="targetVersion" value="5.1.7" />
+        <property name="enableSchemaCreate" value="false" />
+        <property name="enableSchemaUpdate" value="false" />
+        <property name="schemaVersionService" ref="schemaVersionService" />
+        <property name="initialDataList">
+            <list>
+                <ref local="coreInitialData" /> <!-- Always place 'core' FIRST -->
+                <ref local="builtInOperationInitialData" />
+                <ref local="wsInitialData" />
+                <ref local="eventLogInitialData" />
+                <ref local="screenInitialData" />
+                <ref local="alertsInitialData" />
+                <ref local="carriersInitialData" />
+            </list>
+        </property>
+        <property name="upgradeMap">
+            <map></map>
+        </property>
+    </bean>
+
+    <bean id="schemaVersionService" class="com.clairmail.service.initial.SchemaVersionServiceImpl">
+        <property name="schemaVersionDao" ref="schemaVersionDao" />
+    </bean>
+    <bean id="coreInitialData" class="com.clairmail.service.initial.CoreInitialData">
+        <property name="groupDao" ref="groupDao" />
+        <property name="tenantDao" ref="tenantDao" />
+        <property name="permissionDao" ref="permissionDao" />
+        <property name="personDao" ref="personDao" />
+        <property name="personPrincipalDao" ref="personPrincipalDao" />
+        <property name="roleDao" ref="roleDao" />
+        <property name="authenticationService" ref="authenticationService" />
+    </bean>
+    <bean id="alertsInitialData" class="com.clairmail.service.initial.AlertsInitialData">
+        <property name="groupDao" ref="groupDao" />
+        <property name="permissionDao" ref="permissionDao" />
+        <property name="personDao" ref="personDao" />
+        <property name="personPrincipalDao" ref="personPrincipalDao" />
+        <property name="roleDao" ref="roleDao" />
+        <property name="authenticationService" ref="authenticationService" />
+        <property name="conditionalAlertService" ref="conditionalAlertService" />
+        <property name="tenantResolutionService" ref="tenantResolutionService" />
+        <property name="conversationalStateService" ref="conversationalStateService" />
+    </bean>
+    <bean id="screenInitialData" class="com.clairmail.service.initial.ScreenInitialData">
+        <property name="aclEntryDao" ref="aclEntryDao" />
+        <property name="cmNamedResourceDao" ref="cmNamedResourceDao" />
+        <property name="groupDao" ref="groupDao" />
+        <property name="permissionDao" ref="permissionDao" />
+    </bean>
+    <bean id="builtInOperationInitialData" class="com.clairmail.service.initial.BuiltInOperationInitialData">
+        <property name="endpointRegistrationService" ref="endpointRegistrationService" />
+        <property name="builtInOperationsDescriptorLoader" ref="builtInOperationsDescriptorLoader" />
+    </bean>
+    <bean id="carriersInitialData" class="com.clairmail.service.initial.CarriersInitialData">
+        <property name="groupDao" ref="groupDao" />
+        <property name="permissionDao" ref="permissionDao" />
+        <property name="personDao" ref="personDao" />
+        <property name="personPrincipalDao" ref="personPrincipalDao" />
+        <property name="roleDao" ref="roleDao" />
+        <property name="authenticationService" ref="authenticationService" />
+        <property name="carrierService" ref="carrierService" />
+        <property name="tenantResolutionService" ref="tenantResolutionService" />
+    </bean>
+  <!-- Ignore test data from here on out... <bean id="testInitialData" class="com.clairmail.service.initial.TestInitialData"> <property name="groupDao" 
+    ref="groupDao" /> <property name="personDao" ref="personDao" /> <property name="personPrincipalDao" ref="personPrincipalDao" /> <property name="authenticationService" 
+    ref="authenticationService" /> </bean> -->
+    <bean id="wsInitialData" class="com.clairmail.service.initial.WSInitialData">
+        <property name="groupDao" ref="groupDao" />
+        <property name="personDao" ref="personDao" />
+        <property name="personPrincipalDao" ref="personPrincipalDao" />
+        <property name="roleDao" ref="roleDao" />
+        <property name="authenticationService" ref="authenticationService" />
+        <property name="wsUsers">
+            <map>
+                <entry>
+                    <key>
+                        <value>BOT_WS_USER</value>
+                    </key>
+                    <value>BOT_WS_PW</value>
+                </entry>
+                <entry>
+                    <key>
+                        <value>Test_WS_USER</value>
+                    </key>
+                    <value>Test_WS_PW</value>
+                </entry>
+		<entry>
+		    <key>
+		        <value>ENROLLMENT_WS_USER</value>
+		    </key>
+		    <value>ENROLLMENT_WS_PW</value>
+		</entry>
+		
+            </map>
+        </property>
+
+    </bean>
+
+    <bean id="eventLogInitialData" class="com.clairmail.service.initial.EventLogInitialData">
+        <property name="eventLogDao" ref="eventLogDao" />
+    </bean>
+
+
+
+  <!-- ..................... Disconnected Event Service ............ -->
+
+    <bean id="discoEventService" class="com.clairmail.service.disco.DiscoServiceImpl">
+        <property name="discoDao" ref="discoDao" />
+        <property name="personService" ref="personService"></property>
+        <property name="finishedEvent" value="${disco.event.status.complete}">
+        </property>
+        <property name="inProcessEvent" value="${disco.event.status.started}">
+        </property>
+        <property name="newEvent" value="${disco.event.status.new}"></property>
+    </bean>
+
+  <!-- disco.ftp.site=ftp.m-qube.com disco.ftp.login=deact_user disco.ftp.pass=HwqgxqoC5J private String ftpLogin; private String ftpPass; private String 
+    ftpHost; private String fileDirectory = "/home/jack/Desktop/TestFilesFromVerisign/"; //local directory where we can save the files. -->
+ 
+  <!-- Comment out the discoFtpService bean, per SE-7565. The disconnected service will directly pull the files from the local directory.
+       Can be uncommented if FTP is needed -->  
+  <!-- 	   
+    <bean id="discoFtpService" class="com.clairmail.service.disco.DiscoFtpServiceImpl" init-method="init">
+        <property name="discoService" ref="discoEventService" />
+        <property name="phoneService" ref="phoneService" />
+        <property name="ftpLogin" value="${disco.ftp.login}" />
+        <property name="ftpPass" value="${disco.ftp.pass}" />
+        <property name="ftpHost" value="${disco.ftp.site}" />
+        <property name="fileDirectory" value="${disco.ftp.local.dir}" />
+    </bean> -->
+    
+    <!-- Disco service reading the files from the local directory -->
+  <bean id="discoLocalDirectoryService" class="com.clairmail.service.disco.DiscoLocalDirectoryServiceImpl" init-method="init">
+    <property name="discoService" ref="discoEventService" />
+    <property name="phoneService" ref="phoneService" />
+    <property name="fileDirectory" value="${disco.local.dir}" />
+  </bean>
+
+
+    <bean id="discoWorker" class="com.clairmail.service.disco.DiscoWorkerImpl">
+        <property name="disco" ref="discoEventService" />
+        <property name="serviceName" ref="discoLocalDirectoryService" />
+        <property name="eventDispatcher" ref="eventDispatcher" />
+    </bean>
+
+    <bean id="duplicateSMSDetectorService" class="com.clairmail.service.messaging.dup.sms.SmppTimeWindowDupDetector" init-method="init"
+        destroy-method="shutdown">
+        <property name="enabled" value="${dedup.sms.enabled}" />
+        <property name="timeWindow" value="${dedup.sms.time.window}" />
+        <property name="cleanupInterval" value="${dedup.sms.cleanup.interval}" />
+    </bean>
+
+  <!-- ..................... Encryption Service ..................... -->
+
+    <bean id="encryptionService" class="com.clairmail.service.encryption.EncryptionServiceImpl">
+    <!-- Currently 'cipherName' can be either 'Blowfish', 'AES' -->
+        <property name="cipherName" value="Blowfish" />
+        <property name="systemKeyName" value="WXK1" />
+        <property name="myKeys">
+            <map>
+        <!-- There must be at least one key defined and indicated in the property above as the 'systemKeyName'. The name given doesn't really matter as 
+          long as it exists. Since the keynames are stored in the database too, using obscure key names provides a little extra peace of mind. We are currently using 
+          a weak system key name becuase the default JDK installs used by most of the Kiev guys don't support strong encryption. -->
+
+        <!-- IMPORTANT NOTE ON CHANGING KEYS! NEVER delete or change the value of a key that is in use!! To safely change keys, declare an entry for a 
+          named key, as in the examples below, then set the new key name as the value of the 'systemKeyName' property (above) and restart - DO NOT DELETE OR CHANGE 
+          the previously used key name. All new values will be encrypted using the new key and any values loaded using the old key will be reencrypted using the 
+          new key when saved. TODO: 1) Interface allowing key changes at runtime, perhaps using JMX? 2) Service for reencrypting previously encrypted data en masse -->
+                <entry>
+                    <key>
+                        <value>WXK1</value>
+                    </key>
+                    <bean id="systemKeyDefault" class="com.clairmail.service.encryption.GenericKey">
+                        <property name="hexValue" value="6E314272356C3937" />
+                    </bean>
+                </entry>
+                <entry>
+                    <key>
+                        <value>S10A</value>
+                    </key>
+                    <bean id="systemKey" class="com.clairmail.service.encryption.GenericKey">
+                        <property name="stringValue" value="AF6B1AB82A10CBB94059E046873376A7" />
+                    </bean>
+                </entry>
+
+        <!-- These are just examples of additional key declarations: -->
+                <entry>
+          <!-- A 256 bit key -->
+                    <key>
+                        <value>STG1</value>
+                    </key>
+                    <bean id="strongKey" class="com.clairmail.service.encryption.GenericKey">
+                        <property name="hexValue" value="7DABFE227352C1551B6DBCB405D03BD078C28EDC38E45E53F59E3E8A0D92D362" />
+                    </bean>
+                </entry>
+                <entry>
+          <!-- A 192 bit key -->
+                    <key>
+                        <value>MDM2</value>
+                    </key>
+                    <bean id="mediumKey" class="com.clairmail.service.encryption.GenericKey">
+                        <property name="hexValue" value="E957ABF76C4D56A62E6DD5E4A6B3AC44D6769593516C8092" />
+                    </bean>
+                </entry>
+                <entry>
+          <!-- A 128 bit key -->
+                    <key>
+                        <value>OK12</value>
+                    </key>
+                    <bean id="okKey" class="com.clairmail.service.encryption.GenericKey">
+                        <property name="hexValue" value="9EF51A6627BBA53ACCE276FA002E32FC" />
+                    </bean>
+                </entry>
+                <entry>
+          <!-- Another 128 bit key -->
+                    <key>
+                        <value>OK14</value>
+                    </key>
+                    <bean id="defaultPropKey" class="com.clairmail.service.encryption.GenericKey">
+                        <property name="stringValue" value="58DD12A34EBCA53EEFE8BA8A26E0A173" />
+                    </bean>
+                </entry>
+
+            </map>
+        </property>
+    </bean>
+
+  <!-- ................ Endpoint Administration Service .............. -->
+
+    <bean id="endpointService" class="com.clairmail.service.endpoint.EndpointAdministrationServiceImpl">
+        <property name="cmServiceEndpointDao" ref="cmServiceEndpointDao" />
+    </bean>
+
+  <!-- ................. Endpoint Registration Service ............... -->
+
+    <bean id="endpointRegistrationService" class="com.clairmail.service.endpoint.EndpointRegistrationServiceImpl">
+        <property name="authorizationAdministrationService" ref="authorizationAdminService" />
+        <property name="endpointAdministrationService" ref="endpointService" />
+        <property name="endpointRegistrationValidator" ref="endpointRegistrationValidator" />
+    </bean>
+    <bean id="endpointRegistrationValidator" class="com.clairmail.service.validation.EndpointRegistrationValidatorImpl">
+        <property name="duplicatePrefixError" value="error.bac.command_prefix_duplicate" />
+        <property name="duplicateNameError" value="error.bac.command_registered" />
+        <property name="invalidCommandName" value="error.bac.command_invalid_prefix" />
+    </bean>
+
+  <!-- ................. Endpoint Resolution Service ................. -->
+
+    <bean id="endpointResolutionService" class="com.clairmail.service.endpoint.EndpointResolutionServiceImpl">
+        <property name="cmServiceEndpointDao" ref="cmServiceEndpointDao" />
+        <property name="acceptWildCards" value="${server.accept.wildcard.command}" />
+    </bean>
+
+  <!-- .............. Escalating Authentication Service .............. -->
+
+    <bean id="escalatingAuthenticationService" class="com.clairmail.service.authentication.SingleMessageAuthenticationService">
+        <property name="authenticationDao" ref="authenticationDao" />
+        <property name="messageBufferService" ref="messageBufferService" />
+        <property name="expireMinutes" value="${authentication.expire.mins}" />
+    <!-- Actual AuthenticationSchemes defined in applicationContext.Site.xml -->
+        <property name="authenticationSchemeMap" ref="authenticationSchemeMap" />
+    </bean>
+  <!-- not used, left for possible future use <bean id="escalatingAuthenticationService" class="com.clairmail.service.authentication.EscalatingAuthenticationServiceImpl"> 
+    <property name="authenticationDao" ref="authenticationDao" /> <property name="messageBufferService" ref="messageBufferService" /> <property name="expireMinutes" 
+    value="${authentication.expire.mins}"/> <property name="authenticationSchemeMap" ref="authenticationSchemeMap" /> </bean> -->
+
+  <!-- ..................... Event Logging Service ....................... -->
+
+    <bean id="eventLoggingService" class="com.clairmail.service.logging.EventLoggingServiceImpl">
+        <property name="eventLogDao" ref="eventLogDao" />
+        <property name="personService" ref="personService" />
+        <property name="importanceLevel" value="IMPORTANT" />
+    </bean>
+
+  <!-- ..................... Event Dispatcher ....................... -->
+    <bean id="eventDispatcher" class="com.clairmail.event.impl.EventDispatcherImpl" init-method="init" destroy-method="unload">
+        <property name="poolSize" value="20" />
+        <property name="listeners">
+            <list>
+                <bean class="com.clairmail.event.impl.LoggableEventListener">
+                    <property name="eventLoggingService" ref="eventLoggingService" />
+                </bean>
+        <!-- Uncomment the section below once the notificationService in applicationContext.Site.xml is configured. -->
+
+        <!--bean class="com.clairmail.service.event.notification.NotificationListener"> <property name="notificationService" ref="notificationService" 
+          /> </bean -->
+                <bean class="com.clairmail.service.nodemanagement.NodeManagementServiceImpl">
+                </bean>
+            </list>
+        </property>
+    </bean>
+
+  <!-- .................... Message Buffer Service ...................... -->
+
+    <bean id="messageBufferService" class="com.clairmail.service.authentication.MessageBufferServiceImpl">
+        <property name="authenticationDao" ref="authenticationDao" />
+        <property name="messageSenderService" ref="messageSenderServiceImpl" />
+    </bean>
+
+  <!-- .................. Message Redelivery Service .................... -->
+
+    <bean id="messageRedeliveryService" class="com.clairmail.service.recovery.MessageRedeliveryServiceImpl" init-method="init" destroy-method="unload">
+        <property name="responseProcessor" ref="responseProcessorComponent" />
+        <property name="nodeId" value="${node.id}" />
+        <property name="batchSize" value="1000" />
+        <property name="randomizeSchedule" value="${redelivery.interval.randomize}" />
+        <property name="minInterval" value="${redelivery.interval.low}" />
+        <property name="maxInterval" value="${redelivery.interval.high}" />
+        <property name="maxAttempts" value="${redelivery.max.attempts}" />
+        <property name="initialRetryAttempts" value="${redelivery.initial.retry.attempts}" />
+        <property name="redeliveryQueueService" ref="redeliveryQueueService" />
+    </bean>
+
+    <bean id="redeliveryQueueService" class="com.clairmail.service.recovery.RedeliveryQueueServiceImpl">
+        <property name="redeliveryQueueMessageDao" ref="redeliveryQueueMessageDao" />
+    </bean>
+
+
+  <!-- ...................... System Monitor Service .................... -->
+
+
+    <bean id="monitorService" class="com.clairmail.service.monitor.MonitorServiceImpl" init-method="init" destroy-method="stopMonitors">
+        <property name="monitorMap">
+            <map>
+                <entry>
+                    <key>
+                        <value>memoryMonitor</value>
+                    </key>
+                    <ref bean="linuxMemoryMonitor" />
+                </entry>
+                <entry>
+
+                    <key>
+                        <value>cpuMonitor</value>
+                    </key>
+                    <ref bean="linuxCpuMonitor" />
+                </entry>
+
+                <entry>
+                    <key>
+                        <value>diskFreeSpaceMonitor</value>
+                    </key>
+                    <ref bean="linuxDiskFreeSpaceMonitor" />
+                </entry>
+
+                <entry>
+                    <key>
+                        <value>jvmHeapMonitor</value>
+                    </key>
+                    <ref bean="jvmHeapMonitor" />
+                </entry>
+
+                <entry>
+                    <key>
+                        <value>databaseConnectionMonitor</value>
+                    </key>
+                    <ref bean="databaseConnectionMonitor" />
+                </entry>
+        <!-- The next two monitors no longer function, as of the move to JMS and message queues <entry> <key> <value>inFlightMessageMonitor</value> </key> 
+          <ref bean="inFlightMessageMonitor" /> </entry> <entry> <key> <value>averageMessageResponseTimeMonitor</value> </key> <ref bean="averageMessageResponseTimeMonitor" 
+          /> </entry> -->
+            </map>
+        </property>
+    </bean>
+
+  <!-- The next two monitors no longer function, as of the move to JMS and message queues <bean id="inFlightMessageMonitor" class="com.clairmail.service.monitor.InFlightMessageMonitor" 
+    depends-on="staticSpring"> <property name="systemMonitorService" ref="systemMonitorService" /> <property name="pollingPeriod" value="1000"></property> 
+    <property name="rollingLogWindow" value="3600000"></property> <property name="numHours" value="6"></property> <property name="fileName" value="inFlighMsgFile"></property> 
+    <property name="filePath" value="${monitor.files.local.dir}" /> </bean> <bean id="averageMessageResponseTimeMonitor" class="com.clairmail.service.monitor.AverageMessageResponseTimeMonitor" 
+    depends-on="staticSpring"> <property name="pollingPeriod" value="5000"></property> <property name="systemMonitorService" ref="systemMonitorService" /> 
+    <property name="rollingLogWindow" value="3600000"></property> <property name="numHours" value="6"></property> <property name="fileName" value="msgRespTimeFile"></property> 
+    <property name="filePath" value="${monitor.files.local.dir}" /> <property name="maxConsecutiveThresholdFails" value="5" /> <property name="numConsecutiveThresholdFails" 
+    value="0" /> <property name="responseTimeThreshold" value="15000" /> </bean> -->
+    <bean id="jvmHeapMonitor" class="com.clairmail.service.monitor.JVMHeapMonitor" depends-on="staticSpring">
+        <property name="pollingPeriod" value="1000"></property>
+        <property name="rollingLogWindow" value="3600000"></property>
+        <property name="numHours" value="6"></property>
+        <property name="fileName" value="jvmHeapFile"></property>
+        <property name="filePath" value="${monitor.files.local.dir}" />
+    </bean>
+    <bean id="linuxCpuMonitor" class="com.clairmail.service.monitor.LinuxCPUMonitor" depends-on="staticSpring">
+        <property name="pollingPeriod" value="1000"></property>
+        <property name="rollingLogWindow" value="3600000"></property>
+        <property name="numHours" value="6"></property>
+        <property name="fileName" value="cpuFile"></property>
+        <property name="filePath" value="${monitor.files.local.dir}" />
+        <property name="inUsePercentThreshold" value="90" />
+        <property name="maxConsecutiveThresholdFails" value="5" />
+        <property name="numConsecutiveThresholdFails" value="0" />
+    </bean>
+    <bean id="linuxMemoryMonitor" class="com.clairmail.service.monitor.LinuxMemoryMonitor" depends-on="staticSpring">
+        <property name="pollingPeriod" value="1000"></property>
+        <property name="rollingLogWindow" value="3600000"></property>
+        <property name="numHours" value="6"></property>
+        <property name="fileName" value="memoryFile"></property>
+        <property name="filePath" value="${monitor.files.local.dir}" />
+        <property name="inUseAlertThreshold" value="90" /><!-- This is a percentage, if greater than 99%, it will be set to 99% -->
+        <property name="maxConsecutiveThresholdFails" value="5" />
+        <property name="numConsecutiveThresholdFails" value="0" />
+    </bean>
+    <bean id="linuxDiskFreeSpaceMonitor" class="com.clairmail.service.monitor.LinuxDiskFreeSpaceMonitor" depends-on="staticSpring">
+        <property name="pollingPeriod" value="1000"></property>
+        <property name="rollingLogWindow" value="3600000"></property>
+        <property name="numHours" value="6"></property>
+        <property name="fileName" value="diskFile"></property>
+        <property name="filePath" value="${monitor.files.local.dir}" />
+        <property name="thresholdMap">
+            <map>
+                <entry>
+                    <key>
+                        <value>/dev/sda3</value>
+                    </key>
+                    <value>1000000</value>
+                </entry>
+            </map>
+        </property>
+        <property name="maxConsecutiveThresholdFails" value="5" />
+    </bean>
+
+    <bean id="databaseConnectionMonitor" class="com.clairmail.service.monitor.DatabaseConnectionMonitor" depends-on="staticSpring">
+        <property name="pollingPeriod" value="60000"></property>
+        <property name="rollingLogWindow" value="360000"></property>
+        <property name="numHours" value="6"></property>
+        <property name="fileName" value="databaseConnectionFile"></property>
+        <property name="filePath" value="${monitor.files.local.dir}"></property>
+        <property name="service" ref="systemMonitorService" />
+    <!-- timeoutThreshold is in milliseconds -->
+        <property name="timeOutThreshold" value="3000" />
+        <property name="maxConsecutiveThresholdFails" value="5" />
+        <property name="numConsecutiveThresholdFails" value="0" />
+    </bean>
+
+    <bean id="systemMonitorService" class="com.clairmail.service.monitor.SystemMonitorServiceImpl">
+        <property name="dao" ref="systemMonitorDao"></property>
+    </bean>
+
+
+  <!-- ......................Node Management Service ....................... -->
+    <bean id="nodeManagementService" class="com.clairmail.service.nodemanagement.NodeManagementServiceImpl" init-method="init" destroy-method="stop">
+        <property name="myNodeId" value="${node.id}" />
+        <property name="recoveryService" ref="recoveryService" />
+        <property name="monitorService" ref="monitorService" />
+        <property name="smppServerMBean" ref="smppServerComponent" />
+        <property name="emailServerMBean" ref="emailServerComponent" />
+        <property name="alertSenderMBean" ref="conditionalAlertSender" />
+        <property name="delayProcessorMBean" ref="delayQueueProcessor" />
+        <property name="commandDispatcherMBean" ref="commandDispatcher" />
+        <property name="httpSmsServerMBean" ref="httpSmsServerComponent" />
+    </bean>
+
+  <!-- ......................One Time PIN Service ....................... -->
+
+    <bean id="otpService" class="com.clairmail.service.otp.OneTimePINServiceImpl">
+        <property name="messageSource" ref="serverMessageSource" />
+        <property name="personService" ref="personService" />
+        <property name="messageSender" ref="messageSenderServiceImpl" />
+        <property name="passwordService" ref="passwordStrengthService" />
+        <property name="localeResolutionService" ref="localeResolutionService" />
+    </bean>
+
+  <!-- .................. Password Strength Service ..................... -->
+
+    <bean id="passwordStrengthService" class="com.clairmail.service.person.PasswordStrengthServiceImpl">
+        <property name="dictionary" ref="passwordDictionary" />
+        <property name="minLength" value="${password.min.length}" />
+        <property name="minNumbers" value="${password.min.numbers}" />
+        <property name="minMixedCase" value="${password.min.mixedcase}" />
+        <property name="minSpecial" value="${password.min.specialchars}" />
+        <property name="minScore" value="${password.min.score}" />
+    </bean>
+    <bean id="passwordDictionary" class="com.clairmail.service.person.DirectoryBasedDictionary">
+        <property name="resource" value="classpath:dictionary" />
+    </bean>
+
+
+  <!-- .................. Periodic Notification Service ................... -->
+
+    <bean id="periodicNotificationService" class="com.clairmail.service.periodicnotification.PeriodicNotificationServiceImpl">
+        <property name="periodicNotificationDao" ref="periodicNotificationDao" />
+        <property name="sourceAddressDao" ref="sourceAddressVerificationDao" />
+        <property name="personService" ref="personService" />
+        <property name="defaultNotificationPeriod" value="${default.notification.period}" />
+        <property name="messageSenderService" ref="messageSenderServiceImpl" />
+        <property name="messageSource" ref="serverMessageSource" />
+        <property name="localeResolutionService" ref="localeResolutionService" />
+    </bean>
+    <bean id="periodicNotificationWorker" class="com.clairmail.service.periodicnotification.PeriodicNotificationWorkerImpl" destroy-method="unload">
+        <property name="service" ref="periodicNotificationService" />
+        <property name="tenantService" ref="tenantResolutionService" />
+        <property name="nodeId" value="${node.id}" />
+
+    </bean>
+
+  <!-- ......................... Macro Service ........................ -->
+
+    <bean id="macroService" class="com.clairmail.service.macro.MacroServiceImpl">
+        <property name="personDao" ref="personDao" />
+        <property name="macroDao" ref="macroDao" />
+        <property name="passwordService" ref="passwordStrengthService" />
+        <property name="endpointService" ref="endpointResolutionService" />
+    </bean>
+
+  <!-- ......................... StateModelInitializer ........................ -->
+
+  <!-- StateModelInitializer StateModelInitializer -->
+    <bean id="stateModelInitializer" class="com.clairmail.service.state.bind.StateModelInitializer">
+        <property name="stateModelContext"
+              value="lockboxImplStateModelDescriptor.xml,transactionVerificationStateModelDescriptor.xml,overdraftProtectionStateModelDescriptor.xml,fraudManagementOneStateModelDescriptor.xml,fraudManagementFIdefinedLevelsStateModelDescriptor.xml,fraudManagementUserDefinedLevelsStateModelDescriptor.xml" />
+        <property name="stateModelSchema" value="classpath:stateModel.xsd" />
+        <property name="stateModelMapping" value="classpath:stateModelMapping.xml" />
+        <property name="resourceManager" ref="resourceManager" />
+        <property name="stateService" ref="conversationalStateService" />
+        <property name="tenantService" ref="tenantResolutionService" />
+    </bean>
+
+  <!-- ......................... Location Service Beans ........................ -->
+    <bean id="serviceInvokerHttpClient" class="org.apache.commons.httpclient.HttpClient">
+        <constructor-arg>
+            <bean id="connectionManager" class="org.apache.commons.httpclient.MultiThreadedHttpConnectionManager" />
+        </constructor-arg>
+    </bean>
+
+    <bean id="urlSigner" class="com.clairmail.service.location.UrlSigner">
+        <constructor-arg value="_" />
+    </bean>
+
+    <bean id="baseMapServiceInvoker" abstract="true">
+        <property name="useSsl" value="false" />
+        <property name="httpClient" ref="serviceInvokerHttpClient" />
+        <property name="signUrl" value="false" />
+        <property name="urlSigner" ref="urlSigner" />
+        
+        <!--  
+        to enable proxy support (for the google location services only), uncomment these lines after entering the correct
+        proxy url & credentials 
+        -->
+        
+        <!-- property name="proxyUrl" value="http://ipAddress:port" /-->
+        <!-- property name="proxyUsername" value="_" /-->
+        <!-- property name="proxyPassword" value="_" /-->
+        
+        <property name="touchMapImageUrlPerGeocode" value="false" />
+        <property name="readTouchedMapUrlResponse" value="false" />
+    </bean>
+
+    <bean id="locationGeoCoder" class="com.clairmail.service.location.LocationGeoCoder" parent="baseMapServiceInvoker">
+        <property name="shouldThrottleRequests" value="true" />
+        <property name="throttleLengthInMilliseconds" value="200" />
+    </bean>
+
+    <bean id="locationMapper" class="com.clairmail.service.location.LocationMapper" parent="baseMapServiceInvoker">
+        <property name="locationGeoCoder" ref="locationGeoCoder" />
+    </bean>
+
+    <bean id="locationDirections" class="com.clairmail.service.location.LocationDirections" parent="baseMapServiceInvoker">
+        <property name="locationService" ref="locationService" />
+        <property name="xmlParser">
+            <bean id="responseXmlParser" class="com.clairmail.service.location.ResponseXmlParser" />
+        </property>
+        <property name="locationMapper" ref="locationMapper" />
+        <property name="locationGeoCoder" ref="locationGeoCoder" />
+    </bean>
+
+    <bean id="locationFinder" class="com.clairmail.service.location.LocationFinderImpl">
+        <property name="locationDao" ref="locationDao" />
+        <property name="locationGeoCoder" ref="locationGeoCoder" />
+    </bean>
+
+    <bean id="locationService" class="com.clairmail.service.location.LocationServiceImpl">
+        <property name="locationDao" ref="locationDao" />
+    </bean>
+
+    <bean id="locationImporterExporter" class="com.clairmail.service.location.LocationImporterExporter">
+        <property name="locationService" ref="locationService" />
+        <property name="geoCoder" ref="locationGeoCoder" />
+        <property name="minThreads" value="1" />
+        <property name="maxThreads" value="1" />
+    </bean>
+  <!-- ................................................................... -->
+
+  <!-- ......................... Apple Feedback Service Beans ........................ -->
+    <bean id="feedbackService" class="com.clairmail.service.feedback.FeedbackServiceImpl">
+        <property name="mobileClientDao" ref="mobileClientDao" />
+    </bean>
+
+    <bean id="deactivatedApplicationProcessor" class="com.clairmail.service.feedback.DeactivatedApplicationProcessor">
+        <property name="messageBundle" ref="applePushMessageBundle" />
+        <property name="feedbackService" ref="feedbackService" />
+    </bean>
+  <!-- ......................................................................... -->
+  <!-- ......................... Remote Deposit Capture Service ........................ -->
+    <bean id="remoteDepositCaptureService" class="com.clairmail.service.feature.RemoteDepositCaptureServiceImpl">
+        <property name="dailyTransactionLimit" value="${rdc.daily.transaction.limit}" />
+        <property name="weeklyTransactionLimit" value="${rdc.weekly.transaction.limit}" />    
+        <property name="dailyAmountLimit" value="${rdc.daily.amount.limit}" />
+        <property name="weeklyAmountLimit" value="${rdc.weekly.amount.limit}" />    
+        <property name="useVelocityLimits" value="${rdc.enable.velocity.limits}" />
+        <property name="personService" ref="personService" />
+        <property name="startOfTheWeek" value="MONDAY" />
+        <property name="remoteDepositCaptureProvider" ref="webClientServiceUserAuthenticator" />
+    </bean>
+    <!-- ......................................................................... -->
+    <!-- ......................... Feature Service ........................ -->
+    <bean id="featureService" class="com.clairmail.service.feature.FeatureServiceImpl">
+        <property name="enrollmentService" ref="productEnrollmentService" />
+        <property name="termsAndConditionsService" ref="termsAndConditionsService" />
+        <property name="productMetadataService" ref="productMetaDataService"/>
+        <property name="tAndCContentManager" ref="termsAndConditionContentManager"/>
+        <property name="tAndCAcceptanceFlowService" ref="tAndCAcceptanceFlowService"/>
+        <property name="entitlementService" ref="entitlementService"/>
+    </bean>
+    
+
+  <!-- .................. Person Administration Service ................. -->
+
+    <bean id="personService" class="com.clairmail.service.person.PersonAdministrationServiceImpl">
+        <property name="personDao" ref="personDao" />
+        <property name="personPrincipalDao" ref="personPrincipalDao" />
+    </bean>
+
+  <!-- ................... Person Registration Service .................. -->
+
+    <bean id="personRegistrationService" class="com.clairmail.service.person.PersonRegistrationServiceImpl">
+        <property name="personAdministrationService" ref="personService" />
+        <property name="authorizationAdministrationService" ref="authorizationAdminService" />
+        <property name="verificationService" ref="verificationService" />
+        <property name="carrierAdminService" ref="carrierService" />
+        <property name="productEnrollmentService" ref="productEnrollmentService" />
+        <property name="termsAndConditionsService" ref="termsAndConditionsService" />
+        <property name="conditionalAlertService" ref="conditionalAlertService"/>
+        <property name="webClientService" ref="webClientService"/>
+    </bean>
+
+  <!-- ........................ Property Service ........................ -->
+
+    <bean id="propertyService" class="com.clairmail.service.property.PropertyServiceImpl">
+        <property name="personDao" ref="personDao" />
+    </bean>
+
+
+  <!-- ...................... Recovery Service ......................... -->
+
+    <bean id="recoveryService" class="com.clairmail.service.recovery.RecoveryServiceImpl" init-method="init" destroy-method="unload">
+    <!-- list of services implementing the com.clairmail.service.recovery.Recoverable interface -->
+        <property name="recoverableServices">
+            <list>
+                <ref bean="conditionalAlertService" />
+                <ref bean="periodicNotificationService" />
+                <ref bean="messageRedeliveryService" />
+            </list>
+        </property>
+        <property name="clusterMemberDao" ref="clusterMemberDao" />
+        <property name="nodeId" value="${node.id}" />
+        <property name="serverHttpAddress" value="${server.http.address}" />
+        <property name="serverHttpPort" value="${server.http.port}" />
+        <property name="systemStatusService" ref="systemStatusService" />
+    </bean>
+
+  <!-- ...................... Request Creator ........................ -->
+    <bean id="requestCreator" class="com.clairmail.service.messaging.RequestCreatorImpl">
+        <property name="exceptionSenderDestination">
+            <bean class="com.clairmail.common.messaging.CMQName">
+                <property name="namespaceUri" value="http://mobile.clairmail.com" />
+                <property name="localPart" value="exception-sender" />
+            </bean>
+        </property>
+        <property name="acceptWildCards" value="${server.accept.wildcard.command}" />
+        <property name="ignoreAnonymousUsers" value="${ignore.anonymous.access}" />
+        <property name="ignoreUnknownCommands" value="${ignore.unknown.command}" />
+        <property name="defaultCommand" value="${default.command}" />
+        <property name="macroService" ref="macroService" />
+        <property name="authenticationService" ref="authenticationService" />
+        <property name="endpointResolutionService" ref="endpointResolutionService" />
+        <property name="propertyService" ref="propertyService" />
+    <!-- Actual InputHandlers defined in applicationContext.Site.xml -->
+        <property name="inputHandlers" ref="inputHandlerMap" />
+        <property name="localeResolutionService" ref="localeResolutionService" />
+        <property name="phoneService" ref="phoneService" />
+        <property name="productMetadataService" ref="productMetaDataService" />
+        <property name="enrollmentFlowService" ref="enrollmentFlowService" />
+    </bean>
+    
+
+  <!-- ....................... Session Service ........................ -->
+
+    <bean id="sessionService" class="com.clairmail.service.session.SessionServiceImpl">
+        <property name="sessionDao" ref="sessionDao" />
+        <property name="expireMinutes" value="${idle.session.timeout}" />
+    </bean>
+
+    <bean id="extendedSessionService" class="com.clairmail.service.session.ExtendedSessionService">
+        <property name="sessionService" ref="sessionService" />
+        <property name="tenantResolutionService" ref="tenantResolutionService" />
+    </bean>
+
+  <!-- ...............SourceAddress Verification Service ................ -->
+
+    <bean id="verificationService" class="com.clairmail.service.sourceaddress.VerificationServiceImpl">
+        <property name="verificationDao" ref="sourceAddressVerificationDao" />
+    <!-- Actual VerificationSchemes defined in applicationContext.Site.xml -->
+    <!-- <property name="emailScheme" ref="emailVerificationScheme" /> <property name="phoneScheme" ref="smsVerificationScheme" /> <property name="mobileClientScheme" 
+      ref="mobileClientVerificationScheme" /> -->
+        <property name="emailSchemes">
+            <map>
+                <entry>
+                    <key>
+                        <value>WEB-EMAIL</value>
+                    </key>
+                    <ref bean="emailSMSVerificationScheme" />
+                </entry>
+                <entry>
+                    <key>
+                        <value>EMAIL-WEB</value>
+                    </key>
+                    <ref bean="emailWebVerificationScheme" />
+                </entry>
+                <entry>
+                    <key>
+                        <value>default</value>
+                    </key>
+                    <ref bean="emailWebVerificationScheme" />
+                </entry>
+            </map>
+        </property>
+        <property name="phoneSchemes">
+            <map>
+                <entry>
+                    <key>
+                        <value>WEB-SMS</value>
+                    </key>
+                    <ref bean="phoneSMSVerificationScheme" />
+                </entry>
+                <entry>
+                    <key>
+                        <value>SMS-WEB</value>
+                    </key>
+                    <ref bean="phoneWebVerificationScheme" />
+                </entry>
+                <entry>
+                    <key>
+                        <value>default</value>
+                    </key>
+                    <ref bean="phoneWebVerificationScheme" />
+                </entry>
+            </map>
+        </property>
+        <property name="mobileClientSchemes">
+      <!-- No mobile client verification scheme supported in 4.1 time frame -->
+            <map>
+            </map>
+        </property>
+
+
+        <property name="tenantResolutionService" ref="tenantResolutionService" />
+    </bean>
+
+  <!-- ...............System Status Service ..................... -->
+    <bean id="systemStatusService" class="com.clairmail.service.management.SystemStatusService" init-method="init" destroy-method="unload">
+
+        <property name="requiredComponentNames">
+            <map>
+                <entry>
+                    <key>
+                        <value>smppServer</value>
+                    </key>
+                    <value>
+                        ClairmailServer5:ContainerName=ProtocolHandlers,Name=SMPPServerComponent
+                    </value>
+          <!-- Uncomment this and comment above to use httpsms instead of smpp component <value> ClairmailServer5:ContainerName=ProtocolHandlers,Name=HttpSMSServerComponent 
+            </value> -->
+                </entry>
+                <entry>
+                    <key>
+                        <value>emailServer</value>
+                    </key>
+                    <value>
+                        ClairmailServer5:ContainerName=ProtocolHandlers,Name=EmailServerComponent
+                    </value>
+                </entry>
+                <entry>
+                    <key>
+                        <value>applePushNotification</value>
+                    </key>
+                    <value>
+                        ClairmailServer5:ContainerName=ProtocolHandlers,Name=ApplePushNotificationComponent
+                    </value>
+                </entry>
+                <entry>
+                    <key>
+                        <value>androidPushNotification</value>
+                    </key>
+                    <value>
+                        ClairmailServer5:ContainerName=ProtocolHandlers,Name=AndroidPushNotificationComponent
+                    </value>
+                </entry>
+                <entry>
+                    <key>
+                        <value>blackberryPushNotification</value>
+                    </key>
+                    <value>
+                        ClairmailServer5:ContainerName=ProtocolHandlers,Name=BlackberryPushNotificationComponent
+                    </value>
+                </entry>
+                <entry>
+                    <key>
+                        <value>alertDelayQueueProcessor</value>
+                    </key>
+                    <value>
+                        ClairmailServer5:ContainerName=Services,Name=AlertDelayQueueProcessor
+                    </value>
+                </entry>
+                <entry>
+                    <key>
+                        <value>alertSenderService</value>
+                    </key>
+                    <value>
+                        ClairmailServer5:ContainerName=Services,Name=AlertSenderService
+                    </value>
+                </entry>
+                <entry>
+                    <key>
+                        <value>websvcCommandDispatcher</value>
+                    </key>
+                    <value>
+                        ClairmailServer5:ContainerName=Services,Name=CommandDispatcher
+                    </value>
+                </entry>
+                <entry>
+                    <key>
+                        <value>moQueueProducerPool</value>
+                    </key>
+                    <value>
+                        ClairmailServer5:ContainerName=Messaging,Name=MOQueueProducerPool
+                    </value>
+                </entry>
+                <entry>
+                    <key>
+                        <value>mtQueueProducerPool</value>
+                    </key>
+                    <value>
+                        ClairmailServer5:ContainerName=Messaging,Name=MTQueueProducerPool
+                    </value>
+                </entry>
+                <entry>
+                    <key>
+                        <value>requestProcesorConsumer</value>
+                    </key>
+                    <value>
+                        ClairmailServer5:ContainerName=Messaging,Name=RequestProcessorConsumer
+                    </value>
+                </entry>
+                <entry>
+                    <key>
+                        <value>requestProcesorConsumer</value>
+                    </key>
+                    <value>
+                        ClairmailServer5:ContainerName=Messaging,Name=MessageManagerConsumer
+                    </value>
+                </entry>
+                <entry>
+                    <key>
+                        <value>syncTopicProducerPool</value>
+                    </key>
+                    <value>
+                        ClairmailServer5:ContainerName=Messaging,Name=SyncTopicProducerPool
+                    </value>
+                </entry>
+                <entry>
+                    <key>
+                        <value>webclientSyncTopicConsumer</value>
+                    </key>
+                    <value>
+                        ClairmailServer5:ContainerName=Messaging,Name=MessageReceiverSyncTopicConsumer
+                    </value>
+                </entry>
+            </map>
+        </property>
+        <property name="statusObserver" ref="eventDispatcher" />
+    </bean>
+
+  <!-- ..............Tenant Administration ................ -->
+
+    <bean id="tenantAdminService" class="com.clairmail.service.tenant.TenantAdministrationServiceImpl">
+        <property name="tenantDao" ref="tenantDao" />
+    </bean>
+
+  <!-- ..............Tenant Resolution ................ -->
+
+    <bean id="tenantResolutionService" class="com.clairmail.service.tenant.TenantResolutionServiceImpl">
+        <property name="tenantDao" ref="tenantDao" />
+    <!-- <property name="cacheMap"> <bean id="replicatedHashMap" class="com.clairmail.extensions.jgroups.ReplicatedHashMapFactory"> <property name="channelName" 
+      value="App1"/> <property name="clusterOptions" value="udp.xml"/> <property name="timeout" value="5000"/> <property name="distributable" value="true"/> 
+      </bean> </property> -->
+    </bean>
+
+  <!-- ...............WebClientServices.................................. -->
+
+  <!-- RmiServiceExporter <bean class="org.springframework.remoting.rmi.RmiServiceExporter"> <property name="serviceName" value="RemoteWebClientService"/> 
+    <property name="service" ref="remoteWebClientService"/> <property name="serviceInterface" value="com.clairmail.service.webclient.CMRemoteWebClientService"/> 
+    <property name="registryPort" value="${remote.webclient.registry.port}"/> </bean> -->
+
+    <bean id="webClientService" class="com.clairmail.service.webclient.WebClientServiceImpl" destroy-method="unload">
+        <property name="wcDao" ref="wcDao" />
+        <property name="personDao" ref="personDao" />
+        <property name="tenantResolutionService" ref="tenantResolutionService" />
+        <property name="userAuthenticator" ref="webClientServiceUserAuthenticator" />
+        <property name="messageSenderService" ref="messageSenderServiceImpl" />
+        <property name="messageReceiver" ref="messageReceiver" />
+        <property name="requestCreator" ref="requestCreator" />
+        <property name="simpleSessionLength" value="${web.ui.simple.session.length}" /> <!-- timeout for simple state machine -->
+        <property name="authenticatedVerifiedSessionLength" value="${web.ui.authenticated.verified.session.length}" /> <!-- timeout from the auth-verified state -->
+        <property name="authenticatedSessionLength" value="${web.ui.authenticated.session.length}" /> <!-- timeout from the auth  state -->
+        <property name="idVerifiedSessionLength" value="${web.ui.identified.verified.session.length}" />  <!--  timeout from the identified-verified state  -->
+        <property name="identifiedSessionLength" value="${web.ui.identified.session.length}" />  <!--  timeout from the can-verify-with-pin state (if pin enabled)-->
+        <property name="personAdministrationService" ref="personService" />
+        <property name="personRegistrationService" ref="personRegistrationService" />
+        <property name="userLookupService" ref="webClientServiceUserAuthenticator" />
+        <property name="userDetailsManager" ref="webClientServiceUserAuthenticator" />
+        <property name="mutualMultifactorAuthenticator" ref="webClientServiceUserAuthenticator" />
+        <property name="conditionalAlertService" ref="conditionalAlertService" />
+        <property name="conversationalStateService" ref="conversationalStateService" />
+        <property name="verificationService" ref="verificationService" />
+        <property name="xpathExpression" value="${web.ui.xpath}" />
+        <property name="defaultCountry" value="${person.default.country}" />
+        <property name="extendedAuthService" ref="webClientServiceUserAuthenticator" />
+        <property name="sessionService" ref="sessionService" />
+        <property name="extendedSessionService" ref="extendedSessionService" />
+        <property name="usernameService" ref="userNameService" />
+        <property name="sessionPropertiesToSave" ref="propertyKeys" />
+        <property name="entitlementService" ref="entitlementService" />
+        <property name="remoteDepositCaptureService" ref="remoteDepositCaptureService" />
+        <property name="supportsMultiLogin" value="false" />
+        <property name="supportsLegacyResponses" value="false" />        
+		<property name="clientTypeAuthStateMachine" ref="clientTypeStateMachine"/>
+    </bean>
+    
+    <!-- state machine beans -->
+  <bean id="simpleAuthStateMachine" class="com.clairmail.common.webclient.SimpleAuthStateMachine"/>
+  <bean id="completeAuthStateMachine" class="com.clairmail.common.webclient.CompleteAuthStateMachine"/>
+  <bean id="pinlessAuthStateMachine" class="com.clairmail.common.webclient.PinlessAuthStateMachine"/>
+
+	<!-- clientype         BLACKBERRY, ANDROID, IPHONE, MOBILEWEB, WEBSERVICE, UNKNOWN, APPLETABLET, ANDROIDTABLET
+	 enum beans -->
+   <bean id="BLACKBERRY" class="com.clairmail.service.webclient.CMRemoteWebClientService$ClientType" factory-method="valueOf">
+        <constructor-arg value="BLACKBERRY" />
+    </bean>
+   <bean id="ANDROID" class="com.clairmail.service.webclient.CMRemoteWebClientService$ClientType" factory-method="valueOf">
+        <constructor-arg value="ANDROID" />
+    </bean>
+   <bean id="IPHONE" class="com.clairmail.service.webclient.CMRemoteWebClientService$ClientType" factory-method="valueOf">
+        <constructor-arg value="IPHONE" />
+    </bean>
+   <bean id="MOBILEWEB" class="com.clairmail.service.webclient.CMRemoteWebClientService$ClientType" factory-method="valueOf">
+        <constructor-arg value="MOBILEWEB" />
+    </bean>
+   <bean id="WEBSERVICE" class="com.clairmail.service.webclient.CMRemoteWebClientService$ClientType" factory-method="valueOf">
+        <constructor-arg value="WEBSERVICE" />
+    </bean>
+   <bean id="UNKNOWN" class="com.clairmail.service.webclient.CMRemoteWebClientService$ClientType" factory-method="valueOf">
+        <constructor-arg value="UNKNOWN" />
+    </bean>
+   <bean id="APPLETABLET" class="com.clairmail.service.webclient.CMRemoteWebClientService$ClientType" factory-method="valueOf">
+        <constructor-arg value="APPLETABLET" />
+    </bean>
+   <bean id="ANDROIDTABLET" class="com.clairmail.service.webclient.CMRemoteWebClientService$ClientType" factory-method="valueOf">
+        <constructor-arg value="ANDROIDTABLET" />
+    </bean>
+
+	<!-- map of clientype to statemachine (so same map can be shared between WebClientServiceImpl and CMRemoteWebClientServiceImpl -->
+	<util:map id="clientTypeStateMachine">
+		<entry key-ref="BLACKBERRY"><ref bean="simpleAuthStateMachine" /></entry>
+		<entry key-ref="ANDROID"><ref bean="simpleAuthStateMachine" /></entry>
+		<entry key-ref="IPHONE"><ref bean="simpleAuthStateMachine" /></entry>
+		<entry key-ref="MOBILEWEB"><ref bean="simpleAuthStateMachine" /></entry>
+		<entry key-ref="WEBSERVICE"><ref bean="simpleAuthStateMachine" /></entry>
+		<entry key-ref="UNKNOWN"><ref bean="simpleAuthStateMachine" /></entry>
+		<entry key-ref="APPLETABLET"><ref bean="simpleAuthStateMachine" /></entry>
+		<entry key-ref="ANDROIDTABLET"><ref bean="simpleAuthStateMachine" /></entry>
+	</util:map>
+
+
+    <util:set id="propertyKeys">
+        <util:constant static-field="com.clairmail.common.webclient.WCSession.COUNTRY" />
+        <util:constant static-field="com.clairmail.common.webclient.WCSession.LOCALE" />
+        <util:constant static-field="com.clairmail.common.webclient.WCSession.TIMEZONE" />
+    </util:set>
+
+    <bean id="remoteWebClientService" class="com.clairmail.service.webclient.CMRemoteWebClientServiceImpl">
+        <property name="wcService" ref="webClientService"></property>
+        <property name="requestCreator" ref="requestCreator" />
+        <property name="sessionLength" value="${web.ui.authenticated.verified.session.length}" />
+        <property name="tenantResolutionService" ref="tenantResolutionService" />
+        <property name="useLegacyConnectorForRDC" value="${use.legacy.rdc.connector}" />
+        <property name="usernameService" ref="userNameService" />
+    </bean>
+
+    <bean id="remoteWebClientServiceBridge" class="com.clairmail.service.webclient.CMRemoteWebClientServiceBridgeImpl">
+        <property name="remoteWebClientService" ref="remoteWebClientService" />
+        <property name="productMetadataService" ref="productMetaDataService"/>
+        <property name="tAndCContentManager" ref="termsAndConditionContentManager"/>
+        <property name="tenantResolutionService" ref="tenantResolutionService" />
+    </bean>
+
+    <bean id="pendingStateEventSubmitter" class="com.clairmail.service.state.PendingStateEventSubmitterImpl">
+        <property name="conversationalStateService" ref="conversationalStateService"></property>
+        <property name="tenantResolutionService" ref="tenantResolutionService" />
+        <property name="firstRetryInMinutes" value="1" />
+        <property name="retryIntervalMinutes" value="1" />
+        <property name="retryIntervalDecayFactor" value="10" />
+        <property name="maxIntervalDays" value="1" />
+        <property name="maxRetryWhenNoGiveUp" value="10" />
+        <property name="nodeId" value="${node.id}" />
+        <property name="batchLockMillis" value="60000" />
+        <property name="pendingEventBatchSize" value="100" />
+    </bean>
+
+    <bean id="phoneService" class="com.clairmail.service.sourceaddress.PhoneServiceImpl" init-method="init" />
+
+    <bean id="localeResolutionService" class="com.clairmail.service.messaging.LocaleResolutionServiceInternationalImpl">
+        <property name="phoneService" ref="phoneService" />
+        <property name="resourceManager" ref="resourceManager" />
+    </bean>
+
+
+    <bean id="serviceDataService" class="com.clairmail.service.servicedata.ServiceDataServiceImpl">
+        <property name="serviceDao" ref="serviceDataDao" />
+    </bean>
+
+    <bean id="userNameService" class="com.clairmail.service.username.UserNameServiceImpl">
+        <property name="dataService" ref="serviceDataService" />
+        <property name="encryptionService" ref="encryptionService" />
+        <property name="messageBundle" ref="saveUserNameMessageBundle" />
+    </bean>
+
+    <bean id="saveUserNameMessageBundle" class="com.clairmail.rm.client.MessageBundle">
+        <property name="resourceManager" ref="resourceManager" />
+        <property name="names">
+            <util:list id="userNameMessageFiles">
+                <value>${save.username.configuration.file}</value>
+            </util:list>
+        </property>
+    </bean>
+
+  <!-- ...............fraud alert util classes ................................. -->
+    <bean id="fraudEmailHandler" class="com.clairmail.fraudalerts.handler.FraudEmailHandler">
+        <property name="messageSender" ref="messageSenderServiceImpl" />
+    </bean>
+
+    <bean id="fraudAlertsMessageSource" class="org.springframework.context.support.ResourceBundleMessageSource">
+        <property name="basename">
+            <value>messages_fraudManagement</value>
+        </property>
+    </bean>
+
+
+  <!-- ................ Productization Services .............. -->
+
+    <bean id="productDeploymentService" class="com.clairmail.service.product.ProductDeploymentServiceImp" init-method="init" destroy-method="close">
+        <property name="location" value="${com.clairmail.server.home}/conf/products" />
+    </bean>
+
+    <bean id="productMetaDataService" class="com.clairmail.service.product.ProductMetadataServiceImp" />
+
+    <bean id="productEnrollmentService" class="com.clairmail.service.product.ProductEnrollmentServiceImp">
+        <property name="productEnrollmentDao" ref="productEnrollmentDao" />
+        <property name="personService" ref="personService" />
+        <property name="conditionalAlertService" ref="conditionalAlertService" />
+    </bean>
+
+    <bean id="termsAndConditionsService" class="com.clairmail.service.product.TermsAndConditionsServiceImp">
+        <property name="termsAndConditionsDao" ref="termsAndConditionsDao" />
+        <property name="personService" ref="personService" />
+        <property name="productMetaDataService" ref="productMetaDataService" />
+        <property name="termsAndConditionContentManager" ref="termsAndConditionContentManager" />
+        <property name="localeResolutionService" ref="localeResolutionService" />
+    </bean>
+
+    <bean id="termsAndConditionContentManager" class="com.clairmail.service.product.TermsAndConditionContentManagerImp" init-method="init"
+        destroy-method="close">
+        <property name="tcContentManager" ref="resourceManager" />
+        <property name="contentLocation" value="${resource.tc.directory}" />
+    </bean>
+
+    <bean id="autoSetupService" class="com.clairmail.service.product.AutoSetupServiceImp">
+        <property name="messageManager" ref="messageManager" />
+        <property name="alertService" ref="conditionalAlertService" />
+        <property name="productMetaDataService" ref="productMetaDataService" />
+    </bean>
+
+    <bean id="entitlementService" class="com.clairmail.service.product.EntitlementServiceImp">
+        <property name="productEnrollmentService" ref="productEnrollmentService" />
+        <property name="termsAndConditionsService" ref="termsAndConditionsService" />
+        <property name="enrollmentFlowService" ref="enrollmentFlowService" />
+        <property name="messageManager" ref="messageManager" />
+    </bean>
+
+    <bean id="enrollmentFlowService" class="com.clairmail.service.product.EnrollmentFlowServiceImp">
+        <property name="messageManager" ref="messageManager" />
+        <property name="extendedSessionService" ref="extendedSessionService" />
+        <property name="termsAndConditionsService" ref="termsAndConditionsService" />
+        <property name="productEnrollmentService" ref="productEnrollmentService" />
+        <property name="autoSetupService" ref="autoSetupService" />
+        <property name="personService" ref="personService" />
+    </bean>
+
+    <bean id="tAndCAcceptanceFlowService" class="com.clairmail.service.product.EnrollmentFlowServiceImp">
+        <property name="messageManager" ref="messageManager" />
+        <property name="extendedSessionService" ref="extendedSessionService" />
+        <property name="termsAndConditionsService" ref="termsAndConditionsService" />
+        <property name="productEnrollmentService" ref="productEnrollmentService" />
+        <property name="autoSetupService" ref="autoSetupService" />
+        <property name="personService" ref="personService" />
+    </bean>
+
+    <bean id="productCommandServiceLoader" class="com.clairmail.service.product.ProductCommandServiceLoader">
+        <property name="entitlementService" ref="entitlementService" />
+        <property name="enrollmentFlowService" ref="enrollmentFlowService" />
+    </bean>
+
+    <bean id="entitledProductListSvcFacade" class="com.clairmail.service.product.EntitledProductListSvcFacade">
+        <property name="entitlementService" ref="entitlementService" />
+    </bean>
+
+    <bean id="eligibilitySvcFacade" class="com.clairmail.service.product.EligibilitySvcFacade">
+        <property name="enrollmentFlowService" ref="enrollmentFlowService" />
+    </bean>
+
+    <bean id="productEnrollmentFlowSvcFacade" class="com.clairmail.service.product.ProductEnrollmentFlowSvcFacade">
+        <property name="enrollmentFlowService" ref="enrollmentFlowService" />
+    </bean>
+
+    <bean id="tcAcceptanceFlowSvcFacade" class="com.clairmail.service.product.TcAcceptanceFlowSvcFacade">
+        <property name="tcAcceptanceFlowSvc" ref="tAndCAcceptanceFlowService" />
+    </bean>
+
+    <bean id="checkProductEnrollmentStatusFacade" class="com.clairmail.service.product.CheckProductEnrollmentStatusFacade">
+        <property name="tcAcceptanceFlowSvc" ref="tAndCAcceptanceFlowService" />
+    </bean>
+
+    <bean id="mfaMessageManagerMock" class="com.clairmail.service.mfa.MfaMessageManagerMock"/>
+
+
+
+</beans>

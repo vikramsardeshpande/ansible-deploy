@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE log4j:configuration SYSTEM "log4j.dtd">
+
+	<!--
+		=====================================================================
+	-->
+	<!--
+	-->
+	<!--
+		Log4j Configuration
+	-->
+	<!--
+	-->
+	<!--
+		=====================================================================
+	-->
+	<!-- $Id: log4j.xml 1686 2007-05-11 23:46:01Z bj $ -->
+	<!-- $Revision: 1686 $ -->
+	<!--
+		| For more configuration infromation and examples see the Jakarta
+		Log4j | owebsite: http://jakarta.apache.org/log4j
+	-->
+<log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/"
+	debug="false">
+	<!-- ================================= -->
+	<!-- Preserve messages in a local file -->
+	<!-- ================================= -->
+	<!-- A time/date based rolling appender -->
+       <appender name="FILE" class="org.apache.log4j.DailyRollingFileAppender">
+         <param name="File" value="${catalina.base}/logs/batchloaderservice.log" />
+          <param name="Append" value="true" />
+          <param name="DatePattern" value="'.'yyyy-MM-dd-HH" />
+           <param name="MaxFileSize" value="20MB" />
+            <param name="MaxBackupIndex" value="25" />
+             <layout class="org.apache.log4j.PatternLayout">
+             <param name="ConversionPattern" value="%d{ISO8601} [%t] %-5p [%c] %m%n" />
+            </layout>
+             </appender>
+
+	<!-- ============================== -->
+	<!-- Append messages to the console -->
+	<!-- ============================== -->
+	<appender name="CONSOLE" class="org.apache.log4j.ConsoleAppender">
+		<param name="Target" value="System.out" />
+
+		<param name="Threshold" value="INFO" />
+
+
+		<layout class="org.apache.log4j.PatternLayout">
+			<!-- The default pattern: Date Priority [Category] Message\n -->
+			<param name="ConversionPattern" value="%t %d{ISO8601} %-5p [%c{1}:%M] %m%n" />
+		</layout>
+	</appender>
+	<!-- ================ -->
+	<!-- Limit categories -->
+	<!-- ================ -->
+
+	<category name="org.springframework">
+		<priority value="INFO" />
+	</category>
+
+	<category name="org.springframework.jmx">
+		<priority value="INFO" />
+	</category>
+
+	<category name="org.springframework.batch">
+		<priority value="INFO" />
+	</category>
+
+	<category name="com.clairmail">
+		<priority value="DEBUG" />
+	</category>
+
+	<category name="com.clairmail.batch">
+		<priority value="DEBUG" />
+	</category>
+
+	<category name="com.clairmail.batch.item">
+		<priority value="DEBUG" />
+	</category>
+
+	<category name="com.clairmail.batch.resource">
+		<priority value="DEBUG" />
+	</category>
+
+	<category name="com.clairmail.batch.test">
+		<priority value="DEBUG" />
+	</category>
+
+	<category name="com.clairmail.batch.test.tasklet">
+		<priority value="DEBUG" />
+	</category>
+	
+	<!-- ======================= -->
+	<!-- Setup the Root category -->
+	<!-- ======================= -->
+	<root>
+		<appender-ref ref="FILE" />
+		<appender-ref ref="CONSOLE" />
+	</root>
+</log4j:configuration>
+

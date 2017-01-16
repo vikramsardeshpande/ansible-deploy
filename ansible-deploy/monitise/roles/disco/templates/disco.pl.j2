@@ -1,0 +1,236 @@
+#!/usr/bin/perl
+
+#######################################################################################
+## Brian Rankin, October 4 2011  
+## Perl script for Mblox disco web services: 
+## 1. Be sure to setup syslog for logging!! In /etc/syslog.conf: local2.* /var/log/disco.log
+## 2. Customer firewall must permit outbound SSL connects to soap.mblox.com: 63.236.51.160/28
+## 3. Supports a web proxy server -- set the $proxy variable as appropriate
+## 4. Run nightly in the cron, about 2 hours before CMserver processes disco
+#######################################################################################
+
+use LWP::UserAgent;
+use XML::Simple;
+use Data::Dumper;
+use Crypt::SSLeay;
+use Sys::Syslog;
+use strict;
+
+## Global variables to change as needed
+my $host='soap.mblox.com';			## mblox soap server
+my $user="{{ disco_user }}";			## shortcode account
+my $pass="{{ disco_password }}";		## shortcode password
+my $outputDir="{{ disco_root }}";	## output folder for Disco files
+my $proxy;				
+{% if disco_proxy == 'yes' %}
+my $proxy = '{{ disco_proxy_url }}';	## leave empty if there isn't a proxy server
+{% endif %}
+#my $proxy = 'http://user:pass@server';	## use this format if user/pass for proxy server
+
+######################################################################################
+###### Nothing below here should change
+######################################################################################
+
+## get today's date for file downloads
+my $date=`date +"%Y-%m-%d"`;
+chop($date);
+$date = join ("",$date, "Z");
+&logger("Disco processing started for date $date");
+
+## Get list of urls to download, in XML format
+my $url="https://$host/comf/nashSOAP";
+$XML::Simple::PREFERRED_PARSER = 'XML::Parser';
+my $content = &generateXML($user, $pass, $date);
+my $results = &postpage($url, $content, "GetFileLocationArgs", $proxy);
+&logger("Files to download: $results");
+  
+## Process the list of urls
+my @var=&process_xml1($results); 			## process the XML page, producing an array of URLs
+foreach my $url(@var)					## for each URL:
+{
+	my $liner=$url;
+        $liner =~ s/comf\/(.*?)\?/$1/i;			## extract file name from url
+        my $filer=$1;
+        $filer =~ s/\.xml/\.csv/g;
+	&logger("Download XML page $url");
+	my $html = &getpage ($url, $user, $pass, $proxy);## get the XML page with the disconnected numbers
+	my @mdns = &process_xml2($html);		## process the XML page, producing an array of MDNs
+	my $results = &output_file($filer, @mdns);	## write the disco file to $outputDir
+}
+
+## done
+&logger("Disco processing complete");
+exit 0;
+
+######################################################################################
+###### subroutines
+######################################################################################
+
+## generate the SOAP XML for the first request
+## inputs = $user, $pass, $day. Output = the result XML
+sub generateXML()
+{
+        my $user=shift;
+        my $pass=shift;
+        my $day=shift;
+
+	my $var="<soapenv:Envelope xmlns:soapenv='http://schemas.xmlsoap.org/soap/envelope/' xmlns:urn='urn:types.nashapi.soap.billgate.gateway.mblox.com'>
+   <soapenv:Header/>
+   <soapenv:Body>
+      <urn:GetFileLocationArgs>
+         <urn:ClientUserName>$user</urn:ClientUserName>
+         <urn:ClientPassword>$pass</urn:ClientPassword>
+         <urn:RequestedDay>$day</urn:RequestedDay>
+      </urn:GetFileLocationArgs>
+   </soapenv:Body>
+</soapenv:Envelope>
+";
+
+        return $var;
+
+}
+
+## Process the XML from the first response
+## Output = an array of URLs, each represending a Disco file to download
+sub process_xml1 ()
+{
+
+	my $str=shift;
+	my @array;
+	my $xml = XML::Simple->new(KeyAttr=>[]); #, ForceArray=>1,  KeepRoot => 1);
+	my $data = $xml->XMLin($str);
+
+	# dereference hash ref
+       	&logger("Start processing XML with list of URLs");
+	foreach my $e (@{$data->{'soapenv:Body'}->{GetFileLocationResult}->{FileLocations}->{FileUrl}}) 
+	{
+		push (@array, $e->{Url});
+	}
+       	&logger("Completed processing XML with list of URLs");
+	return(@array);
+
+}
+
+## Process the XML from the second response
+## Output = an array of disconnected numbers, in Verisign disco format, for consumption by CMserver
+sub process_xml2 {
+
+	my $str=shift;
+	my $xml = XML::Simple->new(KeyAttr=>[]); #, ForceArray=>1,  KeepRoot => 1);
+	my $data = $xml->XMLin($str);
+
+	# dereference hash ref
+       	&logger("Start processing XML with MDNs");
+	my @array;
+	foreach my $e (@{$data->{MSISDNChange}})
+	{
+		if ($e->{MSISDNEvent} =~ /MDN Deactivation/i)	## only deactivated numbers
+		{
+			## make number compatible with Syniverse format
+			## push into an array for later
+			my $number =  $e->{MSISDN};
+			$number =~ s/^0+//;	## drop leading zeros
+			my ($dater, $timer) = split(" ", $e->{timeStamp});
+			$timer = substr($timer, 0, 5);
+			my $str=join("",$number,",Deactivation,",$dater,"T",$timer,"Z,","170");
+			push (@array, $str);
+		}
+	}
+       	&logger("Finished processing XML with MDNs");
+	return(@array);
+}
+
+##
+## Write out the CSV files
+sub output_file
+{
+	
+	my $filer = shift;
+	my @nums=@_;
+       	&logger("Start writing disco file $outputDir/$filer");
+	unless (open(OUT, ">$outputDir/$filer"))
+	{
+        	&logger("ERROR: Could not open output file $outputDir/$filer $!");
+        	die;
+	}
+	foreach my $mdn(@nums)
+	{
+		print OUT "$mdn\n";
+	}
+	close(OUT);
+       	&logger("Completed writing disco file $outputDir/$filer");
+}
+
+
+##
+## POST a Soap request, with $content
+##
+sub postpage {
+	my $url = shift;
+	my $content = shift;
+	my $cmd = shift;
+	my $proxy = shift;
+	my $ua = LWP::UserAgent->new;
+
+	## for proxy
+	$ua->proxy(['http'], $proxy);
+	$ENV{HTTPS_PROXY} = $proxy;
+
+	$ua->agent("Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.0)");
+	$ua->default_header('SOAPAction' => "$cmd");
+	my $req = HTTP::Request->new(POST => "$url");
+	$req->content_type('text/xml; charset=utf-8');
+	$req->content("$content");
+   	my $response=$ua->request($req);
+	my $body = $response->content;
+	unless ($response->is_success)
+	{
+		my $err = $response->status_line;
+        	&logger("ERROR: Could not open URL $url $err");
+        	die;
+	}
+   	return $body;
+}
+
+##
+## GET a page
+##
+sub getpage {
+	my $url=shift;
+        my $user=shift;
+        my $pass=shift;
+	my $proxy = shift;
+   	my $ua = LWP::UserAgent->new;
+
+	## for proxy
+	$ua->proxy(['http'], $proxy);
+	$ENV{HTTPS_PROXY} = $proxy;
+
+   	$ua->agent("Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.0)");
+   	my $req = HTTP::Request->new(GET => "$url");
+	$req->authorization_basic($user,$pass);
+   	my $response=$ua->request($req);
+	unless ($response->is_success)
+	{
+		my $err = $response->status_line;
+        	&logger("ERROR: Could not open URL $url $err");
+        	die;
+	}
+	my $body = $response->content;
+   	return $body;
+}
+
+##
+## Log to syslog. Place these entries in /etc/syslog.conf
+## local2.* /var/log/disco.log
+##
+sub logger()
+{
+        my $var=shift;
+        if (openlog($0,'ndelay,pid'))
+        {
+                syslog('err|local2', "$var");
+                closelog;
+        }
+}
+

@@ -1,0 +1,84 @@
+## CMS configuration
+soap.wsdl.location={{ connection_protocol }}://{{ server_http_address }}:{{ server_http_port }}/cms/services/Router
+system.id=BOT_WS_USER
+system.password=BOT_WS_PW
+csr.id=ENROLLMENT_WS_USER
+csr.password=ENROLLMENT_WS_PW
+
+## SSO configuration
+sso.soap.wsdl.location={{ connection_protocol }}://localhost:8080/TokenManager/ws
+sso.system.id=BOT_WS_USER
+sso.system.password=BOT_WS_PW
+sso.csr.id=BOT_WS_USER
+sso.csr.password=BOT_WS_PW
+# SSO type
+# Possible values: token, saml, none
+sso = saml
+sso.delimiter = -
+
+## OLB configuration
+# This OLB URL will be fired after specified interval by enrollment to keep OLB session alive while user in on enrollment pages
+session.olb.keepalive.url=http://localhost:8080/enrollmentKeepAlive/keepAlive
+# This interval is in seconds.
+session.olb.keepalive.interval=60
+# OLB redirect url in case of sign out
+olb.url=https://www.google.com
+
+
+## Configuration properties (signin/signup)
+# This is a user identification scheme while sign up
+# Possible values: kba, ba, none
+user.identification.scheme = none
+
+# MFA flow type
+# Possible values: sitekey, nositekey, none
+mfa.type = nositekey
+
+# User creation allowed in
+# Possible values: ldap, mfa, all, none
+# NOTE: if you say only 'ldap', then it will only create the user in ldap. Same for mfa too. If you want to create user in both credential store, put 'all'  
+create.user.in = all
+
+# ????
+#enrollment app session timeout in seconds
+session.timeout=1800
+
+#enrollment app cache timeout in minutes
+cache.timeout=30mn
+
+#user type cache timeout in minutes
+user.type.cache.timeout=30mn
+
+#soap timeout in milliseconds for token server and cmserver.
+token.soap.timeout=100000
+cm.soap.timeout=100000
+
+# Security parameters for hashing and salting sensitive information
+security.hash.salt=c!@iRma1L
+security.hash.iterations=10
+
+
+#properties for mfa answer and sitephrase validation, used only in the java code.  javascript validation needs to be changed in the javascript files.
+reg.ex.for.answer.and.sitephrase=^[a-zA-z0-9 ]*$
+max.length.for.answer=50
+max.length.for.phrase=100
+
+
+##########################################
+#
+#  Note, for the app to effectively work with caching, this 
+#  property must be set to true, and vice versa, if caching is 
+#  is not enabled on the app, it MUST be set to false.  
+#
+#  If cacheing is turned off, and this is set to true, 
+#  there will be Java Heap Space issues when the app is being used, and 
+#  they will be difficult to figure out. 
+#
+##########################################
+app.is.cached=false
+
+
+#tells the app to add the security headers for the 
+#token manager soap calls
+uses.token.security.headers=false
+

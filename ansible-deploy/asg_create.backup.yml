@@ -1,0 +1,143 @@
+---
+  - hosts: localhost  
+    connection: local 
+    gather_facts: no  
+    vars_files:
+      - staging_vpc_info
+      - staging_web_ec2_info
+      - staging_sg_info
+      - staging_lb_info
+    vars: 
+      region: us-east-1
+      prefix: staging  
+      env: web
+      az0: us-east-1b
+      az1: us-east-1c
+      asg_name: PublicAsg
+      instance_type: t2.micro
+      image_id: ami-b7ebf6a0
+      keypair: N-virginia-nov-2016
+      asg_min: 1 
+      asg_max: 2
+    tasks: 
+      - set_fact: 
+          timestamp: "{{ lookup('pipe','date +%g%m%d%H%M%s') }}"
+      - name: Create Launch Configuration 
+        ec2_lc: 
+           region: "{{ region }}"
+           name: "{{ asg_name }}-{{ env }}"
+           security_groups: "{{ staging_sg_web }}"
+           image_id: "{{ image_id }}"
+           key_name: "{{ keypair }}"
+           instance_type: "{{ instance_type }}"
+           instance_monitoring: yes 
+           assign_public_ip: True
+           state: present
+      #     user_data: '#!/bin/bash\necho "Hello world"'
+           #: "{{ staging_subnet_public_0 }}, {{ staging_subnet_public_1 }}" 
+        register: lc 
+      - debug: var=lc
+      - name: write the asg launch config to a file {{ prefix }}_asg_info
+        shell: echo "{{ prefix }}_lc_web"":" "{{ asg_name }}-{{ env }}" > "{{ prefix }}"_asg_info
+      - name: Configure Auto Scaling Group
+        ec2_asg: 
+          region: "{{ region }}"
+          name: "{{ asg_name }}-{{ env }}"
+          vpc_zone_identifier: "{{ staging_subnet_public_0 }},{{ staging_subnet_public_1 }}"
+          launch_config_name: "{{ lc.name }}"
+          availability_zones: "{{ az0 }},{{ az1 }}"
+          health_check_type: EC2 
+          health_check_period: 300 
+          desired_capacity: "{{ asg_min }}" 
+          min_size: "{{ asg_min }}" 
+          max_size: "{{ asg_max }}"
+          tags: 
+            - Name: "{{ asg_name }}-{{ env }}"
+          load_balancers: "{{ staging_lb_name }}"
+          state: present 
+        register: asg
+      - debug: var=asg
+      - name: Configure Scaling policy 
+        ec2_scaling_policy: 
+          region: "{{ region }}" 
+          name: "{{ item.name }}"
+          asg_name: "{{ asg_name }}-{{ env }}"
+          state: present 
+          adjustment_type: "{{ item.adjustment_type }}" 
+          min_adjustment_step: "{{ item.min_adjustment_step }}"
+          scaling_adjustment: "{{ item.scaling_adjustment }}" 
+          cooldown: "{{ item.cooldown }}" 
+        with_items: 
+          - name: "Increase Group Size" 
+            adjustment_type: "ChangeInCapacity" 
+            scaling_adjustment: +1 
+            min_adjustment_step: 1
+            cooldown: 180 
+          - name: "Decrease Group Size" 
+            adjustment_type: "ChangeInCapacity" 
+            scaling_adjustment: -1 
+            min_adjustment_step: 1 
+            cooldown: 300 
+        register: scaling_policy  
+      - debug: var=scaling_policy
+#      - name: Define Metric Alarms Configuration 
+#        set_fact: 
+#          metric_alarms: 
+#            - name: "{{ asg.name }}-ScaleUp"
+#              comparison: ">="  
+#              threshold: 80.0  
+#              alarm_actions: 
+#                - "{{ scaling_policy.results[0].arn }}" 
+#            - name: "{{ asg.name }}-ScaleDwon"
+#              comparison: "<=" 
+#              threshold: 40.0 
+#              alarm_actions:
+#                - "{{ scaling_policy.results[1].arn }}" 
+
+      - name: Configure Metric Alarms  
+        ec2_metric_alarm: 
+          region: "{{ region }}" 
+        #  name: "{{ item.name }}"
+          state: present 
+          metric: "CPUUtilization"
+          namespace: "AWS/EC2" 
+          statistic: "Average" 
+       #   comparison: "{{ item.comparison }}"
+       #   threshold: "{{ item.threshold }}"
+          period: 60 
+          evaluation_periods: 5 
+          unit: "Percent" 
+          dimensions: 
+            AutoScalingGroupName: "{{ asg.name }}" 
+          alaram_actions: #"{{ item.alaram_actions }}"
+          #with_items: 
+            - name: "{{ asg.name }}-ScaleUp"
+              comparison: ">="
+              threshold: 80.0
+              alarm_actions:
+                - "{{ scaling_policy.results[1].arn }}"
+          register: alaram 
+#        with_items:  "{{ metric_alarms }}"
+#        when: "{{ asg.max_size }} > 1"
+#        register: alarms  
+#      - debug: var=alarms 
+ 
+#      - name: Configure Metric Alarms  
+#        ec2_metric_alarm: 
+#         region: "{{ region }}" 
+#         name: "{{ item.name }}" 
+#         state: present 
+#         metric: "CPUUtilization"
+#         namespace: "AWS/EC2" 
+#         statistic: "Average" 
+#         comparison: "{{ item.comparison }}" 
+#         threshold: "{{ item.threshold }}" 
+#         period: 60 
+#         evaluation_periods: 5 
+#         unit: "Percent" 
+#         dimensions: 
+#           AutoScalingGroupName: "{{ asg.name }}" 
+#         alaram_actions: "{{ item.alarm_actions }}" 
+#        with_items:  "{{ metric_alarms }}"
+#        when: "{{ asg.max_size }} > 1"
+#        register: alarms  

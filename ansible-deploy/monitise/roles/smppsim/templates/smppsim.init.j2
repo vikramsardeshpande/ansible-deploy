@@ -1,0 +1,63 @@
+#!/bin/bash
+
+# chkconfig: - 79 20
+#
+### BEGIN INIT INFO
+# Provides: smppsim
+# Required-Start: $network
+# Required-Stop: $network
+# Default-Start:
+# Default-Stop:
+# Short-Description: start and stop smppsim
+### END INIT INFO
+#
+
+SERVICE_NAME=smppsim
+PATH_TO_JAR={{ monitise_root }}/smppsim/smppsim-web.jar
+PID_PATH_NAME=/var/run/smppsim.pid
+
+start()
+	if [ ! -f $PID_PATH_NAME ]; then
+		echo "Starting $SERVICE_NAME ..."
+		nohup java -Xmx128m -Dsmsc.listen.port=20109 -Djetty.port=20108 -jar $PATH_TO_JAR >> {{ monitise_root }}/smppsim/logs/smppsim.log 2>&1 &
+		echo $! > $PID_PATH_NAME
+	else
+		echo "$SERVICE_NAME is already running ..."
+	fi
+stop()
+	if [ -f $PID_PATH_NAME ]; then
+		PID=$(cat $PID_PATH_NAME);
+		kill $PID;
+		echo "$SERVICE_NAME stopped ..."
+		rm $PID_PATH_NAME
+	else
+		echo "$SERVICE_NAME is not running ..."
+	fi
+status()
+	if [ -f $PID_PATH_NAME ]; then
+		echo "$SERVICE_NAME is running ..."
+		exit 0
+	else
+		echo "$SERVICE_NAME is not running ..."
+		exit 3
+	fi
+
+
+case "$1" in
+	start)
+		start
+		;;
+	stop)
+		stop
+		;;
+	restart|reload)
+		stop
+		start
+		;;
+	status)
+		status
+		;;
+	*)
+		echo $"Usage: $0 {start|stop|restart|status}"
+		exit 1
+esac

@@ -1,0 +1,67 @@
+---
+# Deploy csr base + solution package
+
+- name: checking "{{ monitise_root }}/tomcat/webapps/csr exist or not"
+  stat: path={{ monitise_root }}/tomcat/webapps/csr
+  register: check_path_csr1
+  when: backup_option
+
+- name: "{{ monitise_root }}/tomcat/webapps/csr not exist"
+  debug: msg="Skipping the csr backup"
+  when:  backup_option and check_path_csr1.stat.exists==false
+
+- name: backup old csr install
+  shell: zip -r  {{ backup_applications }}/csr-backup{{ ansible_date_time['date'] + '_' + ansible_date_time['time'].replace(':', '_') }}.zip {{ monitise_root }}/tomcat/webapps/csr*
+        chdir={{ monitise_root }}/tomcat/webapps
+  when: backup_option and check_path_csr1.stat.exists
+
+
+- name: "create {{ script_temp_dir }}"
+  file: path={{ script_temp_dir }} state=directory mode=755
+
+- name: "create {{ script_temp_dir }} directories"
+  file: path={{ script_temp_dir }}/{{ item }} state=directory mode=755
+  with_items:
+  - csr
+  - csr-solution
+
+- name: extract csr.war file 
+  shell: unzip -o {{ backup_root }}/COREBuilds/{{ core_branch }}/{{ core_build }}/CSR/{{ csr_base_package }}
+         chdir={{ script_temp_dir }}/csr
+
+- name: checking csr solution package exist or not
+  stat: path={{ backup_root }}/PSBuilds/{{ psbuild_number }}/{{ csr_solution_package }}
+  register: check_path_csr
+  when: deploy_solution
+
+- name: csr solution package not exists
+  debug: msg="csr solution package not found"
+  when:  deploy_solution and  check_path_csr.stat.exists==false
+
+- name: unzip the solution package
+  shell: unzip -o {{ backup_root }}/PSBuilds/{{ psbuild_number }}/{{ csr_solution_package }} 
+         chdir={{ script_temp_dir }}/csr-solution
+  when: deploy_solution and check_path_csr.stat.exists
+
+- name: overlay csr solution package
+  shell: /bin/cp -pbr --suffix=.bkp {{ script_temp_dir }}/csr-solution/csr/* {{ script_temp_dir }}/csr/
+  when: deploy_solution and check_path_csr.stat.exists
+
+- name: generate connection.properites file 
+  template: src=connection.properties.j2 dest={{ script_temp_dir }}/csr/WEB-INF/classes/connection.properties backup=yes
+
+- name: copy log4j.xml  
+  copy: src=log4j.xml dest={{ script_temp_dir }}/csr/WEB-INF/classes backup=yes
+
+- name: create new csr war file 
+  shell: zip -r ../csr.war  META-INF/MANIFEST.MF *
+         chdir={{ script_temp_dir }}/csr
+
+- name: delete tomcat work directory
+  shell: rm -rf {{ monitise_root }}/tomcat/work/Catalina/localhost/csr {{ monitise_root }}/tomcat/webapps/csr {{ monitise_root }}/tomcat/webapps/csr.war 
+
+- name: deploy new csr 
+  shell: cp {{ script_temp_dir }}/csr.war {{ monitise_root }}/tomcat/webapps
+
+- name: remove temp csr directory
+  shell: rm -rf {{ script_temp_dir }}/csr* 

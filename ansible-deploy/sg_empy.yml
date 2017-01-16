@@ -1,0 +1,39 @@
+--- 
+  - hosts: localhost 
+    connection: local 
+    gather_facts: no 
+    vars_files: 
+      - staging_vpc_info 
+    vars: 
+      region: us-east-1
+      prefix: staging
+      vpc_id: "{{ staging_vpc }}"
+    tasks:
+      - name: Create empty ec2 security group for webservers 
+        ec2_group: 
+          region: "{{ region }}"
+          vpc_id: "{{ vpc_id }}"
+          name: "{{ prefix }}_sg_web"
+          description: Security group for webservers
+        register: ec2_web
+      - name: Create empty ec2 security group for database servers
+        ec2_group: 
+          region: "{{ region }}"
+          vpc_id: "{{ vpc_id }}"
+          name: "{{ prefix }}_sg_database"
+          description: Security group for database
+        register: ec2_db
+      - name: Create empty ec2 security group for app servers
+        ec2_group: 
+          region: "{{ region }}"
+          vpc_id: "{{ vpc_id }}"
+          name: "{{ prefix }}_sg_app"
+          description: Security group for appservers
+        register: ec2_app
+      - name: write app security group to {{ prefix }}_sg_info file
+        shell: echo "{{ prefix }}_sg_app"":" "{{ ec2_app.group_id }}" > "{{ prefix }}"_sg_info
+      - name: write db security group to {{ prefix }}_sg_info file
+        shell: echo "{{ prefix }}_sg_database"":" "{{ ec2_db.group_id }}" >> "{{ prefix }}"_sg_info
+      - name: write web security group to {{ prefix }}_sg_info file
+        shell: echo "{{ prefix }}_sg_web"":" "{{ ec2_web.group_id }}" >> "{{ prefix }}"_sg_info
+

@@ -1,0 +1,52 @@
+---
+
+- name: install vsftpd
+  yum: name=vsftpd state=present
+
+- name: generate disco user password
+  sudo: no
+  local_action: shell python -c "from passlib.hash import sha512_crypt; print sha512_crypt.encrypt('{{ disco_ftp_pass }}')"
+  register: disco_shadow
+
+- name: setup disco user
+  user: name=disco  home={{ disco_root }} password="{{ disco_shadow.stdout }}"
+        update_password=on_create
+
+- name: setup {{ disco_root }}
+  file: path={{ disco_root }} state=directory owner=disco mode=755
+
+- name: setup {{ disco_processed }}
+  file: path={{ disco_processed }} state=directory owner=cm{{ instance }} group=cm{{ instance }} mode=755
+
+- name: setup {{ disco_root }}/bin
+  file: path={{ disco_root }}/bin state=directory owner=disco group=disco mode=755
+
+- name: generate the disco.pl script
+  template: src=disco.pl.j2 dest={{ disco_root }}/bin/disco.pl owner=disco group=disco mode=755
+
+- name: checking capability.conf exist or not
+  stat: path=/etc/security/capability.conf
+  register: check_path
+
+- name: add a string to the /etc/security/capability.conf file
+  lineinfile: dest=/etc/security/capability.conf
+              insertafter="^#cap_dac_override       luser"
+              line="cap_dac_read_search,cap_dac_override  disco cm{{ instance }}"
+              state=present
+  when: check_path.stat.exists
+
+- name: setup disco download cronjob
+  cron: name="disco download" hour="23" minute="30" state=present user=disco
+        job="{{ disco_root }}/bin/disco.pl > /dev/null 2>&1"
+  when: disco_enabled
+
+- name: setup disco file cleanup cronjob 1
+  cron: name="disco cleanup 1" hour="23" minute="45" state=present user=disco
+        job="find {{ disco_root }}/COMF_* -type f -mtime +7 -exec rm {} \; > /dev/null 2>&1"
+
+- name: setup disco file cleanup cronjob 2
+  cron: name="disco cleanup" hour="23" minute="55" state=present user=cm{{ instance }}
+        job="find {{ disco_processed }}/COMF_* -type f -mtime +7 -exec rm {} \; > /dev/null 2>&1"
+
+- name: enable vsftpd service
+  service: name=vsftpd enabled=yes state=restarted

@@ -1,0 +1,22 @@
+---
+# Variable define here use for both backend and frontend servers which are part of mvp group
+
+# Core and ps build to deploy
+core_branch: 5.1
+core_build: 15Q1
+
+psbuild_number: "181_29290"
+psbuild_path: /share/jenkins/PSBuilds/PUR/PUR_TRUNK/{{ psbuild_number }}/target/
+
+# Choice(true/false)
+backup_option: true
+deploy_solution: false
+
+# Temp directory for Ansible
+script_temp_dir: /tmp/Ansible-Script
+
+# Directory path 
+monitise_root: /opt/monitise
+backup_root: /backup/packages
+backup_logs: /backup/logs
+backup_applications: /backup/applications

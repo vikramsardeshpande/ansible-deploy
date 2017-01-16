@@ -1,0 +1,130 @@
+---
+
+# Backup the old instance if backup_option is set to true
+
+- name: "{{ monitise_root }}/cms exist or not"
+  stat: path={{ monitise_root }}/cms
+  register: check_path_cms1
+  when: backup_option
+
+- name: "{{ monitise_root }}/cms not exist"
+  debug: msg="Skipping the cms backup"
+  when:  backup_option and check_path_cms1.stat.exists==false
+
+- name: backup old install
+  shell: zip -r  {{ backup_applications }}/cms-backup{{ ansible_date_time['date'] + '_' + ansible_date_time['time'].replace(':', '_') }}.zip {{ monitise_root }}/cms
+         chdir={{ monitise_root }}
+  when: backup_option and check_path_cms1.stat.exists
+
+- name: remove old install
+  shell: rm -rf {{ monitise_root }}/cms
+
+# Deploy the base cms
+
+- name: unzip clairmail-server zip
+  shell: /usr/bin/unzip -qod {{ monitise_root }} {{ backup_root }}/COREBuilds/{{ core_branch }}/{{ core_build }}/{{ cms_base_package }}
+
+- name: move to "cms"
+  shell: /bin/mv {{ monitise_root }}/{clairmail-server*,cms}
+
+- name: remove .../cms/server/logs
+  shell: rm -rf {{ monitise_root }}/cms/server/logs
+
+- name: link .../server/logs to /var/log/monitise/cms
+  file: path={{ monitise_root }}/cms/server/logs src=/var/log/monitise/cms state=link
+
+- name: chmod +x .../server/bin/*.sh
+  shell: /bin/chmod +x {{ monitise_root }}/cms/server/bin/*.sh
+
+- name: remove the Force PID use line from clairmail-catalina.sh
+  lineinfile: dest={{ monitise_root }}/cms/server/bin/clairmail-catalina.sh
+        regexp='^CATALINA_PID='
+        state=absent
+# Deploy mbanking and integration package
+- name: unzip mbanking package
+  shell: /usr/bin/unzip -qod {{ monitise_root }}/cms {{ backup_root }}/COREBuilds/{{ core_branch }}/{{ core_build }}/mBanking/{{ mbanking_package }}
+
+#- name: unzip integration package
+#  shell: /usr/bin/unzip -qod {{ monitise_root }}/cms {{ backup_root }}/COREBuilds/{{ core_branch }}/{{ core_build }}/integration/{{ integration_package }}
+#
+# Deploy Solution package
+
+- name: checking cms solution package exist or not
+  stat: path={{ backup_root }}/PSBuilds/{{ psbuild_number }}/{{ cms_solution_package }}
+  register: check_path_cms2
+  when: deploy_solution
+
+- name: cms solution package not exists
+  debug: msg="cms solution package not found"
+  when:  deploy_solution and  check_path_cms2.stat.exists==false
+
+- name: "create {{ script_temp_dir }}"
+  file: path={{ script_temp_dir }} state=directory mode=755
+
+- name: "create {{ script_temp_dir }} directories"
+  file: path={{ script_temp_dir }}/{{ item }} state=directory mode=755
+  with_items:
+  - cms
+  - cms-solution
+
+- name: unzip the solution package
+  shell: unzip -o {{ backup_root }}/PSBuilds/{{ psbuild_number }}/{{ cms_solution_package }}
+         chdir={{ script_temp_dir }}/cms-solution
+  when: deploy_solution and check_path_cms2.stat.exists
+
+- name: deploy solution package
+  shell: /bin/cp -br --suffix=.bkp {{ script_temp_dir }}/cms-solution/cms/* {{ monitise_root }}/cms/
+  when: deploy_solution and check_path_cms2.stat.exists
+
+- name: generate cmservice.properties
+  template: src=cmservice.properties.j2 dest={{ monitise_root }}/cms/conf/cmservice.properties backup=yes
+
+- name: copy log4j.xml 
+  copy: src=log4j.xml dest={{ monitise_root }}/cms/server/cm_services/cms/WEB-INF/classes backup=yes
+
+- name: copy server.xml 
+  copy: src=server.xml dest={{ monitise_root }}/cms/server/conf backup=yes
+
+- name: generate smpp-connection.properties
+  template: src=smpp-connection.properties.j2  dest={{ monitise_root }}/cms/conf/smpp-connection.properties  backup=yes
+
+- name: copy applicationContext.Service.xml
+  copy: src=applicationContext.Service.xml dest={{ monitise_root }}/cms/server/cm_services/cms/WEB-INF backup=yes
+
+#- name: generate email-connection.properties
+#  template: src=email-connection.properties.j2  dest={{ monitise_root }}/cms/conf/email-connection.properties  backup=yes
+#  when: deploy_solution and check_path_cms2.stat.exists
+
+#- name: generate solutions_environment.properties
+#  template: src=solutions_environment.properties.j2 dest={{ monitise_root }}/cms/server/cm_services/cms/WEB-INF/classes/solutions_environment.properties backup=yes
+#  when: deploy_solution and check_path_cms2.stat.exists
+
+#- name: generate rdc.properties
+#  template: src=rdc.properties.j2 dest={{ monitise_root }}/cms/server/cm_services/cms/WEB-INF/classes/rdc.properties backup=yes
+#  when: deploy_solution and check_path_cms2.stat.exists
+
+#- name: generate connector-rsa-onsite-messages.properties
+#  template: src=connector-rsa-onsite-messages.properties.j2 dest={{ monitise_root }}/cms/server/cm_services/cms/WEB-INF/classes/connector-rsa-onsite-messages.properties backup=yes
+#  when: deploy_solution and check_path_cms2.stat.exists
+
+- name: remove rdc.xml
+  shell: /bin/rm -f {{ monitise_root }}/cms/conf/products/rdc.xml
+  when: deploy_solution and check_path_cms2.stat.exists
+
+- name: remove p2p.xml 
+  shell: /bin/rm -f {{ monitise_root }}/cms/conf/products/p2p.xml
+  when: deploy_solution and check_path_cms2.stat.exists
+
+- name: remove fraud.xml
+  shell: /bin/rm -f {{ monitise_root }}/cms/conf/products/fraud.xml
+  when: deploy_solution and check_path_cms2.stat.exists
+
+- name: Change Owenr "{{ monitise_root }}/cms"
+  file: path="{{ monitise_root }}/cms" state=directory owner=cm{{ instance }} recurse=yes 
+
+- name: Change permission "{{ monitise_root }}/cms/conf/jmxremote.password"
+  file: path="{{ monitise_root }}/cms/conf/jmxremote.password" state=file  mode=0400
+
+
+- name: remove temp cms directory
+  shell: rm -rf {{ script_temp_dir }}/cms*

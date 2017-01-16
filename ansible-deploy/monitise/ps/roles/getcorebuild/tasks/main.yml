@@ -1,0 +1,16 @@
+---
+# generic way to push core build folders to target systems:
+#   rsync from vault to local system
+#   rsync from local system to target
+
+- name: ensure local COREBuilds/{{ core_branch }}/{{ core_build }} exists
+  local_action: file path={{ localcache }}/COREBuilds/{{ core_branch }}/{{ core_build }} state=directory
+
+- name: rsync from vault to local system
+  local_action: shell rsync -a {{ aduser }}@mai01-build-02v:/share/jenkins/COREBuilds/{{ core_branch }}/{{ core_build }}/ {{ localcache }}/COREBuilds/{{ core_branch }}/{{ core_build }}/ 
+
+- name: ensure remote COREBuilds/{{ core_branch }}/{{ core_build }} exists
+  file: path={{ backup_root }}/COREBuilds/{{ core_branch }}/{{ core_build }} state=directory
+
+- name: copy from local system to remote
+  copy: src={{ localcache }}/COREBuilds/{{ core_branch }}/{{ core_build }}/ dest={{ backup_root }}/COREBuilds/{{ core_branch }}/{{ core_build }}/ force=no

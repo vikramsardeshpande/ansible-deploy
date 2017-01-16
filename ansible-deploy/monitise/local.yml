@@ -1,0 +1,15 @@
+---
+# local.yml - Local system specific variables
+
+# absolute path on the local system to store large binaries and build artifacts
+# NOTE: The user executing Ansible should have access to create this folder or
+# at least to write files within it.  This location will grow as you deploy
+# more builds, so it is your responsibility to manage disk space.
+localcache: /home/amazon/backup
+
+# your Active Directory username
+# This is used when downloading build artifacts from mai01-build-01v.
+# YOU MUST setup password-less pubkey authentication by running:
+#     ssh-copy-id <aduser>@mai01-build-02v
+aduser: vikram
+

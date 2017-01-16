@@ -1,0 +1,15 @@
+---
+# Install EPEL for systems outside the corporate network
+#
+# NOTE: if the system is in the San Rafael network, you should use the
+# spacewalk role instead.
+
+- name: add EPEL repository
+  copy: src=epel.repo dest=/etc/yum.repos.d/epel-local.repo
+
+- name: push EPEL GPG KEY
+  copy: src=RPM-GPG-KEY-EPEL-6 dest={{ backup_root }}
+
+- name: add EPEL GPG KEY
+  rpm_key: state=present key={{ backup_root }}/RPM-GPG-KEY-EPEL-6
+

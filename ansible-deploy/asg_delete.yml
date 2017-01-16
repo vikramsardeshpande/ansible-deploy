@@ -1,0 +1,32 @@
+---
+  - hosts: localhost  
+    connection: local 
+    gather_facts: no  
+    vars_files:
+      - staging_vpc_info
+      - staging_web_ec2_info
+      - staging_sg_info
+      - staging_asg_info
+    vars: 
+      region: us-east-1
+      prefix: staging  
+      env: web
+      az0: us-east-1b
+      az1: us-east-1c
+      asg_name: MyAsg
+      instance_type: t2.micro
+      image_id: ami-b7ebf6a0
+      keypair: N-virginia-nov-2016
+    tasks: 
+      - set_fact: 
+          timestamp: "{{ lookup('pipe','date +%g%m%d%H%M%s') }}"
+      - name: Delete Auto Scaling Group
+        ec2_lc: 
+           region: "{{ region }}"
+           name: "{{ staging_lc_web }}"
+           state: absent
+      - name: Delete Launch Configuration 
+        ec2_lc: 
+           region: "{{ region }}"
+           name: "{{ staging_lc_web }}"
+           state: absent

@@ -1,0 +1,60 @@
+---
+# Deploy TokenManager base + solution package
+
+- name: "{{ monitise_root }}/tomcat/webapps/TokenManager exist or not"
+  stat: path={{ monitise_root }}/tomcat/webapps/TokenManager
+  register: check_path_TokenManager1
+  when: backup_option
+
+- name: "{{ monitise_root }}/tomcat/webapps/TokenManager status"
+  debug: msg="Skipping the TokenManager backup"
+  when:  backup_option and check_path_TokenManager1.stat.exists==false
+
+- name: backup old TokenManager install
+  shell: zip -r  {{ backup_applications }}/TokenManager-backup{{ ansible_date_time['date'] + '_' + ansible_date_time['time'].replace(':', '_') }}.zip {{ monitise_root }}/tomcat/webapps/TokenManager*
+        chdir={{ monitise_root }}/tomcat/webapps
+  when: backup_option and check_path_TokenManager1.stat.exists
+
+
+- name: "create {{ script_temp_dir }}"
+  file: path={{ script_temp_dir }} state=directory mode=755
+
+- name: "create {{ script_temp_dir }} directories"
+  file: path={{ script_temp_dir }}/{{ item }} state=directory mode=755
+  with_items:
+  - TokenManager
+
+- name: extract TokenManager.war file 
+  shell: unzip -o {{ backup_root }}/COREBuilds/{{ core_branch }}/{{ core_build }}/TokenManager/{{ TokenManager_base_package }}
+         chdir={{ script_temp_dir }}/TokenManager
+
+- name: copy tokenManagerServer.xml core build
+  shell: /bin/cp {{ backup_root }}/COREBuilds/{{ core_branch }}/{{ core_build }}/TokenManager/tokenManagerServer.xml {{ script_temp_dir }}/TokenManager/WEB-INF
+
+- name: copy tokenManagerClient.xml core build
+  shell: /bin/cp {{ backup_root }}/COREBuilds/{{ core_branch }}/{{ core_build }}/TokenManager/tokenManagerClient.xml {{ script_temp_dir }}/TokenManager/WEB-INF
+
+- name: copy web.xml
+  copy: src=web.xml dest={{ script_temp_dir }}/TokenManager/WEB-INF
+
+- name: generate tokenManagerClient.xml
+  template: src=tokenManagerClient.xml.j2 dest={{ script_temp_dir }}/TokenManager/WEB-INF/tokenManagerClient.xml backup=yes
+
+- name: copy logback.xml
+  copy: src=logback.xml dest={{ script_temp_dir }}/TokenManager/WEB-INF/classes backup=yes
+
+- name: copy logging.properties
+  copy: src=logging.properties dest={{ script_temp_dir }}/TokenManager/WEB-INF/classes backup=yes
+
+- name: create new TokenManager war file 
+  shell: zip -r ../TokenManager.war  META-INF/MANIFEST.MF *
+         chdir={{ script_temp_dir }}/TokenManager
+
+- name: delete tomcat work directory
+  shell: rm -rf {{ monitise_root }}/tomcat/work/Catalina/localhost/TokenManager {{ monitise_root }}/tomcat/webapps/TokenManager {{ monitise_root }}/tomcat/webapps/TokenManager.war 
+
+- name: deploy new TokenManager 
+  shell: cp {{ script_temp_dir }}/TokenManager.war {{ monitise_root }}/tomcat/webapps
+
+- name: remove temp TokenManager directory
+  shell: rm -rf {{ script_temp_dir }}/TokenManager*  

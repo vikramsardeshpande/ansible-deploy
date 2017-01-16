@@ -1,0 +1,92 @@
+<configuration scan="true" scanPeriod="60 seconds">
+	<jmxConfigurator />
+
+	<property resource="logging.properties"/>
+	<property name="ENABLE_CONSOLE" value="${ENABLE_CONSOLE:-false}"/>
+
+	<!-- Setup standard appenders -->
+	<if condition='property("ENABLE_CONSOLE").equalsIgnoreCase("true")'>
+		<then>
+			<appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+				<encoder>
+					<pattern>%date{HH:mm:ss.SSS} [%thread] %-5level %logger{0}:%method@%line ${MDC} - %msg%n%exception</pattern>
+				</encoder>
+			</appender>
+
+			<root>
+				<appender-ref ref="CONSOLE" />
+			</root>
+		</then>
+	</if>
+
+	<appender name="MOBILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<File>${catalina.base}/logs/mobile/clairmail-mobile.log</File>
+
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<fileNamePattern>${catalina.base}/logs/mobile/clairmail-mobile.log.%d{yyyy-MM-dd-HH}.gz</fileNamePattern>
+		</rollingPolicy>
+		
+		<encoder>
+			<pattern>%date [%thread] %-5level %logger{36} ${MDC} - %msg%n%exception{3}</pattern>
+		</encoder>
+	</appender>
+
+	<appender name="ERROR" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<File>${catalina.base}/logs/mobile/clairmail-error.log</File>
+
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<fileNamePattern>${catalina.base}/logs/mobile/clairmail-error.log.%d{yyyy-MM-dd-HH}.gz</fileNamePattern>
+		</rollingPolicy>
+
+		<filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+			<level>ERROR</level>
+		</filter>
+
+		<encoder>
+			<pattern>%date [%thread] %-5level %logger:%method@%line ${MDC_ERROR} - %msg%n%xException</pattern>
+		</encoder>
+	</appender>
+
+	<appender name="SECURITY" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<File>${catalina.base}/logs/mobile/clairmail-security.log</File>
+
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<fileNamePattern>${catalina.base}/logs/mobile/clairmail-security.log.%d{yyyy-MM-dd-HH}.gz</fileNamePattern>
+		</rollingPolicy>
+
+		<encoder>
+			<pattern>%date [%thread] %-5level %logger{36} ${MDC_SECURITY} - %msg%n%exception{3}</pattern>
+		</encoder>
+	</appender>
+
+	<appender name="DEVICE_ID" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<File>${catalina.base}/logs/mobile/clairmail-deviceid.log</File>
+
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<fileNamePattern>${catalina.base}/logs/mobile/clairmail-deviceid.log.%d{yyyy-MM-dd-HH}.gz</fileNamePattern>
+		</rollingPolicy>
+
+		<encoder>
+			<pattern>%date %msg%n</pattern>
+		</encoder>
+	</appender>
+
+	<logger name="com.clairmail.mobile" level="${MOBILE_LEVEL:-INFO}" />
+
+	<logger name="com.clairmail.mobile.security" level="INFO">
+		<appender-ref ref="SECURITY" />
+	</logger>
+	<logger name="SECURITY" level="INFO">
+		<appender-ref ref="SECURITY" />
+	</logger>
+
+	<logger name="DEVICE_ID" level="INFO" additivity="false">
+		<appender-ref ref="DEVICE_ID" />
+	</logger>
+
+	<root level="${ROOT_LEVEL:-WARN}">
+		<appender-ref ref="MOBILE" />
+		<appender-ref ref="ERROR" />
+	</root>
+
+</configuration>

@@ -1,0 +1,31 @@
+---
+
+- hosts: localhost
+  connection: local
+  gather_facts: False
+  tasks:
+     - name: Provision a set of instances
+       ec2:
+         key_name: N-virginia-nov-2016
+         group: ansible-ws
+         instance_type: t2.micrso
+         image: "ami-b73b63a0"
+         wait: true
+         count: 1
+         instance_tags:
+            Name: Demo
+       register: ec2
+#- hosts: localhost
+#  connection: local
+#  gather_facts: False
+#  tasks:
+#  - name: Provision an ec2 instance 
+#    vars:
+#        key_name: N-virginia-nov-2016
+#        instance_type: t2.micro
+#        image: ami-b73b63a0
+       # wait: yes
+#        group: webserver
+#        count: 3
+#        vpc_subnet_id: subnet-4203b319
+#        assign_public_ip: no

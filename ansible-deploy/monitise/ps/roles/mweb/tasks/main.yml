@@ -1,0 +1,71 @@
+---
+# Deploy mobile base + solution package
+
+- name: "checking  {{ monitise_root }}/tomcat/webapps/mobile exist or not"
+  stat: path={{ monitise_root }}/tomcat/webapps/mobile
+  register: check_path_mobile1
+  when: backup_option
+
+- name: "{{ monitise_root }}/tomcat/webapps/mobile status"
+  debug: msg="Skipping the mobile backup"
+  when:  backup_option and check_path_mobile1.stat.exists==false
+
+- name: backup old mobile install
+  shell: zip -r  {{ backup_applications }}/mobile-backup{{ ansible_date_time['date'] + '_' + ansible_date_time['time'].replace(':', '_') }}.zip {{ monitise_root }}/tomcat/webapps/mobile*
+        chdir={{ monitise_root }}/tomcat/webapps
+  when: backup_option and check_path_mobile1.stat.exists
+
+
+- name: "create {{ script_temp_dir }}"
+  file: path={{ script_temp_dir }} state=directory mode=755
+
+- name: "create {{ script_temp_dir }} directories"
+  file: path={{ script_temp_dir }}/{{ item }} state=directory mode=755
+  with_items:
+  - mobile
+  - mobile-solution
+
+- name: extract mobile.war file 
+  shell: unzip -o {{ backup_root }}/COREBuilds/{{ core_branch }}/{{ core_build }}/WebUI/{{ mobile_base_package }}
+         chdir={{ script_temp_dir }}/mobile
+
+- name: checking mobile solution package exist or not
+  stat: path={{ backup_root }}/PSBuilds/{{ psbuild_number }}/{{ mobile_solution_package }}
+  register: check_path_mobile2
+  when: deploy_solution
+
+- name: mobile solution package status
+  debug: msg="mobile solution package not found"
+  when:  deploy_solution and  check_path_mobile2.stat.exists==false
+
+
+- name: unzip the solution package
+  shell: unzip -o {{ backup_root }}/PSBuilds/{{ psbuild_number }}/{{ mobile_solution_package }} 
+         chdir={{ script_temp_dir }}/mobile-solution
+  when: deploy_solution and check_path_mobile2.stat.exists
+
+- name: overlay mobile solution package
+  shell: /bin/cp -pbr --suffix=.bkp {{ script_temp_dir }}/mobile-solution/mobile/* {{ script_temp_dir }}/mobile/
+  when: deploy_solution and check_path_mobile2.stat.exists
+
+- name: generate connection.properites file 
+  template: src=connection.properties.j2 dest={{ script_temp_dir }}/mobile/WEB-INF/connection.properties backup=yes
+
+- name: copy logback.xml
+  copy: src=logback.xml dest={{ script_temp_dir }}/mobile/WEB-INF/classes backup=yes
+
+- name: copy logging.properties
+  copy: src=logging.properties dest={{ script_temp_dir }}/mobile/WEB-INF/classes backup=yes
+
+- name: create new mobile war file 
+  shell: zip -r ../mobile.war  META-INF/MANIFEST.MF *
+         chdir={{ script_temp_dir }}/mobile
+
+- name: delete tomcat work directory
+  shell: rm -rf {{ monitise_root }}/tomcat/work/Catalina/localhost/mobile {{ monitise_root }}/tomcat/webapps/mobile {{ monitise_root }}/tomcat/webapps/mobile.war 
+
+- name: deploy new mobile 
+  shell: cp {{ script_temp_dir }}/mobile.war {{ monitise_root }}/tomcat/webapps
+
+- name: remove temp mobile directory
+  shell: rm -rf {{ script_temp_dir }}/mobile*  

@@ -1,0 +1,144 @@
+<?xml version="1.0"?>
+<configuration xmlns="urn:hornetq" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:hornetq /schema/hornetq-jms.xsd">
+
+    <connection-factory name="ConnectionFactory">
+        <connectors>
+            <connector-ref connector-name="netty-connector"/>
+        </connectors>
+        <entries>
+            <entry name="ConnectionFactory"/>
+        </entries>
+        <ha>false</ha>
+        <retry-interval>1000</retry-interval>
+        <producer-max-rate>500</producer-max-rate>
+        <retry-interval-multiplier>1.0</retry-interval-multiplier>
+        <reconnect-attempts>30</reconnect-attempts>
+        <consumer-window-size>0</consumer-window-size>
+    </connection-factory>
+
+    <connection-factory name="NettyConnectionFactory" signature="queue">
+        <xa>false</xa>
+        <connectors>
+            <connector-ref connector-name="netty-connector"/>
+        </connectors>
+        <entries>
+            <entry name="/QueueConnectionFactory"/>
+        </entries>
+        <retry-interval>1000</retry-interval>
+        <retry-interval-multiplier>1.5</retry-interval-multiplier>
+        <max-retry-interval>60000</max-retry-interval>
+        <reconnect-attempts>1000</reconnect-attempts>
+        <consumer-window-size>0</consumer-window-size>
+    </connection-factory>
+
+    <connection-factory name="NettyConnectionFactoryTopic" signature="topic">
+        <xa>false</xa>
+        <connectors>
+            <connector-ref connector-name="netty-connector"/>
+        </connectors>
+        <entries>
+            <entry name="/TopicConnectionFactory"/>
+        </entries>
+        <retry-interval>1000</retry-interval>
+        <retry-interval-multiplier>1.5</retry-interval-multiplier>
+        <max-retry-interval>60000</max-retry-interval>
+        <reconnect-attempts>1000</reconnect-attempts>
+    </connection-factory>
+
+    <!-- dead letter queue -->
+    <queue name="DLQ">
+        <entry name="/queue/DLQ"/>
+    </queue>
+    <!-- expiry queue -->
+    <queue name="ExpiryQueue">
+        <entry name="/queue/ExpiryQueue"/>
+    </queue>
+    <!-- Inbound messages -->
+    <queue name="com.clairmail.MOQueue">
+        <entry name="/queue/com/clairmail/MOQueue"/>
+    </queue>
+    <!-- Outbound messages -->
+    <queue name="com.clairmail.MTQueue">
+        <entry name="/queue/com/clairmail/MTQueue"/>
+    </queue>
+    <!-- This queue is used to handle long-term redelivery -->
+    <queue name="com.clairmail.MTRedelivery">
+        <entry name="/queue/com/clairmail/MTRedelivery"/>
+    </queue>
+    <!-- Queue used for EHCache cache loader -->
+    <queue name="com.clairmail.EHCacheQueue">
+        <entry name="/queue/com/clairmail/EHCacheQueue"/>
+    </queue>
+    <!-- Queue used to send requests for data to Event-Relay -->
+    <queue name="com.clairmail.EventLogRequestQueue">
+        <entry name="/queue/com/clairmail/EventLogRequestQueue"/>
+    </queue>
+    <!-- All outbound events are produced on a queue and on a topic
+        to support point-to-point delivery to the reporting data-source
+        and pub-sub delivery to custom listeners -->
+    <queue name="com.clairmail.EventQueue">
+        <entry name="/queue/com/clairmail/EventQueue"/>
+    </queue>
+    <queue name="com.monitise.PreferencesQueue">
+        <entry name="/queue/com/monitise/PreferencesQueue"/>
+    </queue>
+    <queue name="com.monitise.AlertQueue">
+        <entry name="/queue/com/monitise/AlertQueue"/>
+    </queue>
+    <queue name="com.monitise.SchedulerInputQueue">
+        <entry name="/queue/com/monitise/SchedulerInputQueue"/>
+    </queue>
+    <queue name="com.monitise.EventEngineQueue">
+        <entry name="/queue/com/monitise/EventEngineQueue"/>
+    </queue>
+    <topic name="com.clairmail.EventTopic">
+        <entry name="/topic/com/clairmail/EventTopic"/>
+    </topic>
+    <!-- Topic used to relay sync responses to waiting threads -->
+    <topic name="com.clairmail.SyncTopic">
+        <entry name="/topic/com/clairmail/SyncTopic"/>
+    </topic>
+    <!-- Topic used to receive replies from Event-Relay -->
+    <topic name="com.clairmail.EventLogReplyTopic">
+        <entry name="/topic/com/clairmail/EventLogReplyTopic"/>
+    </topic>
+    <!-- Topic used to replicate Hibernate caches -->
+    <topic name="com.clairmail.EHCacheTopic">
+        <entry name="/topic/com/clairmail/EHCacheTopic"/>
+    </topic>
+<!-- Batch processor queues - Start -->
+<queue name="transactionItemBatchAlerts">
+<entry name="/queues/transactionItemBatchAlerts"/>
+</queue>
+
+<queue name="balanceItemBatchAlerts">
+<entry name="/queues/balanceItemBatchAlerts"/>
+</queue>
+
+<queue name="deleteAlertRegistrations">
+<entry name="/queues/deleteAlertRegistrations"/>
+</queue>
+
+<queue name="userItemBatchAlerts">
+<entry name="/queues/userItemBatchAlerts"/>
+</queue>
+
+<queue name="ODPItemBatchAlerts">
+<entry name="/queues/ODPItemBatchAlerts"/>
+</queue>
+
+<queue name="transactionVerification">
+<entry name="/queues/transactionVerification"/>
+</queue>
+
+<queue name="lockboxImpl">
+<entry name="/queues/lockboxImpl"/>
+</queue>
+
+<!-- MOdead letter queue messages -->
+    <queue name="com.clairmail.MODLQ">
+     <entry name="/queue/com/clairmail/MODLQ"/>
+     </queue>
+                 
+<!-- Batch processor queues - End -->
+</configuration>

@@ -1,0 +1,7 @@
+/var/log/monitise/tomcat/catalina.out {
+    copytruncate
+    daily 
+    rotate 52
+    compress
+    missingok
+}
