@@ -5,3 +5,5 @@
 .viminfo
 N-virginia-nov-2016.pem
 .aws/
+ansible-deploy/*.retry
+.boto

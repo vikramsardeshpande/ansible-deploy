@@ -5,8 +5,8 @@
     vars_files: 
       - staging_vpc_info 
     vars: 
-      region: us-east-1
-      prefix: staging
+#      region: us-east-1
+#      prefix: staging
       vpc_id: "{{ staging_vpc }}"
     tasks:
       - name: Create empty ec2 security group for webservers 

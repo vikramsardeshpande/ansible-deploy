@@ -2,11 +2,11 @@
   - hosts: localhost  
     connection: local 
     gather_facts: no  
-    vars: 
-      region: us-east-1
-      prefix: staging  
-      az0: us-east-1b
-      az1: us-east-1c
+#    vars: 
+#      region: us-east-1
+#      prefix: staging  
+#      az0: us-east-1b
+#      az1: us-east-1c
     tasks: 
       - name: create vpc  
         ec2_vpc: 
@@ -45,8 +45,8 @@
         register: vpc
       - name: write vpc id to {{ prefix }}_vpc_info file 
         shell: echo "{{ prefix }}"_vpc":" "{{ vpc.vpc_id }}" > "{{ prefix }}"_vpc_info 
-      - debug: 
-          msg: "Vikram  {{ vpc.subnets[0].id }}  {{ vpc.subnets[0].resource_tags.Name }}"
+ #     - debug: 
+ #         msg: "Vikram  {{ vpc.subnets[0].id }}  {{ vpc.subnets[0].resource_tags.Name }}"
       - name: write subnets id to {{ prefix }}_vpc_info file
         shell: echo "{{ item.resource_tags.Name }}"":" "{{ item.id }}" >> "{{ prefix }}"_vpc_info
         with_items: "{{ vpc.subnets }}"

@@ -5,13 +5,13 @@
     vars_files: 
       - staging_vpc_info
     vars: 
-      region: us-east-1 
-      prefix: staging 
-      key: N-virginia-nov-2016
-      instance_type: t2.micro 
-      environment: staging
-#      image: ami-b73b63a0
-      image: ami-b7ebf6a0
+#      region: us-east-1 
+#      prefix: staging 
+#      key: N-virginia-nov-2016
+#      instance_type: t2.micro 
+#      environment: staging
+##      image: ami-b73b63a0
+#      image: ami-b7ebf6a0
     tasks: 
       - name: APP instance provisioning  
         ec2: 
@@ -28,12 +28,18 @@
           #id: app_launch_01
           vpc_subnet_id: "{{ staging_subnet_private_0 }}"
 #          count: 1 
-          assign_public_ip: yes
+#          assign_public_ip: yes
 #          volumes: 
 #            - device_name: /dev/sda1 
 #              device_type: gp2 
 #              volume_size: 8 
 #              delete_on_termination: true
+          user_data: | 
+                     #!/bin/bash 
+                     service cms stop 
+                     service tomcat stop 
+                     service smppsim stop 
+                     service hornetq stop 
         register: ec2
       - name: write ec2 instance id to {{ prefix }}_app_ec2 info file
         shell: echo "{{ item.tags.Name }}"":" "{{ item.id }}" > "{{ prefix }}"_app_ec2_info
