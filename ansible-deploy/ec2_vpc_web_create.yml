@@ -5,13 +5,13 @@
     vars_files: 
       - staging_vpc_info
     vars: 
-      region: us-east-1 
-      prefix: staging 
-      key: N-virginia-nov-2016
-      instance_type: t2.micro 
-#      image: ami-b73b63a0
-#      image: ami-b7ebf6a0
-      image: ami-9909e98f
+#      region: us-east-1 
+#      prefix: staging 
+#      key: N-virginia-nov-2016
+#      instance_type: t2.micro 
+##      image: ami-b73b63a0
+##      image: ami-b7ebf6a0
+#      image: ami-9909e98f
     tasks: 
       - name: Web instance provisioning  
         ec2: 
@@ -24,11 +24,11 @@
           instance_tags:
             Name: "{{ prefix }}_web"
             class: web 
-            environment: staging 
+            environment: "{{ environment }}" 
           #id: web_launch_01
           vpc_subnet_id: "{{ staging_subnet_public_0 }}"
-          count: 2 
-          assign_public_ip: yes
+          count: 1 
+#          assign_public_ip: yes
 #          volumes: 
 #            - device_name: /dev/sda1 
 #              device_type: gp2 

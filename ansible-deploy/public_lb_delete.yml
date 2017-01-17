@@ -10,7 +10,7 @@
     tasks: 
        - name: Delete Load Balancer for EC2 instances 
          ec2_elb_lb: 
-           name: "{{ staging_lb_name }}" 
+           name: "{{ staging_public_lb_name }}" 
            region: "{{ region }}"
            state: absent
            wait: yes

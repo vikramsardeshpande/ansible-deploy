@@ -1,3 +1,28 @@
 # variables 
 ansible_user: ec2-user
-ansible_ssh_private_key_file: /home/amazon/N-virginia-nov-2016.pem
+ansible_ssh_private_key_file: /home/amazon2/N-virginia-nov-2016.pem
+
+# VPC variables 
+region: us-east-1
+prefix: staging
+az0: us-east-1b
+az1: us-east-1c
+
+# security Group 
+allowed_ip: 59.163.69.2/32
+allowed_ip_1: 103.6.33.5/32
+
+# Public LB Name
+lb_name: PublicLB
+
+# Private LB Name
+lb_name_private: PrivateLB
+
+
+# ec2 WEB & APP  instances 
+key: N-virginia-nov-2016
+instance_type: t2.micro
+image: ami-7225cb64
+environment: staging
+
+

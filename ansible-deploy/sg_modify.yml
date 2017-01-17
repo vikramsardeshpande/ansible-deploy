@@ -5,12 +5,11 @@
     vars_files: 
       - staging_vpc_info
     vars: 
-      region: us-east-1
-      prefix: staging 
-      allowed_ip: 59.163.69.2/32
-      allowed_ip_1: 103.6.33.5/32
+#      region: us-east-1
+#      prefix: staging 
+#      allowed_ip: 59.163.69.2/32
+#      allowed_ip_1: 103.6.33.5/32
       vpc_id: "{{ staging_vpc }}"
-      private_subjet: 10.0.1.0/24
     tasks: 
       - name: modify sg_web rules  
         ec2_group:  
@@ -31,10 +30,6 @@
              - proto: tcp 
                from_port: 6100
                to_port: 6100
-               cidr_ip: "{{ allowed_ip_1 }}" 
-             - proto: tcp 
-               from_port: 6122
-               to_port: 6122
                cidr_ip: "{{ allowed_ip_1 }}" 
           # Allow http access from anywhere 
              - proto: tcp 
@@ -57,10 +52,6 @@
                to_port: 1433  
                group_name: "{{ prefix }}_sg_app"
              - proto: tcp  
-               from_port: 1521
-               to_port: 1521
-               group_name: "{{ prefix }}_sg_app"
-             - proto: tcp  
                from_port: 22
                to_port: 22
                group_name: "{{ prefix }}_sg_app"
@@ -78,7 +69,7 @@
              - proto: tcp  
                from_port: 80
                to_port: 80
-               group_name: "{{ prefix }}_sg_web"
+               cidr_ip: 0.0.0.0/0 
              - proto: tcp  
                from_port: 443
                to_port: 443
@@ -88,10 +79,6 @@
                to_port: 22
                group_name: "{{ prefix }}_sg_web"
              - proto: tcp  
-               from_port: 22
-               to_port: 22
-               group_name: "{{ prefix }}_sg_database"
-             - proto: tcp  
                from_port: 20108
                to_port: 20108
-               group_name: "{{ prefix }}_sg_web"
+               cidr_ip: 0.0.0.0/0 
