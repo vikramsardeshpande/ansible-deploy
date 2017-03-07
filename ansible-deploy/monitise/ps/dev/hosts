@@ -5,7 +5,7 @@
 #devtunnel
 #devweb
 tag_class_web
-#tag_class_app
+tag_class_app
 
 [mvp-frontend:children]
 tag_class_web

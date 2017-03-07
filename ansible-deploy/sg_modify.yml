@@ -85,7 +85,7 @@
              - proto: tcp  
                from_port: 22
                to_port: 22
-               group_name: "{{ prefix }}_sg_web"
+               cidr_ip: 0.0.0.0./0
              - proto: tcp 
                from_port: 22 
                to_port: 22 
