@@ -58,7 +58,7 @@ low_memory: True
 disco_ftp_site: localhost
 disco_ftp_pass: 22disco
 oltp_mssql_name: clairdb
-oltp_mssql_host: oltpdb.c3g6opeugpra.us-east-1.rds.amazonaws.com
+oltp_mssql_host: oltpdb-mssql.c3g6opeugpra.us-east-1.rds.amazonaws.com
 oltp_mssql_port: 1433
 oltp_mssql_user: testoltpuser
 oltp_mssql_password: testoltppass

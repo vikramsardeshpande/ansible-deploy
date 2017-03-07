@@ -5,12 +5,13 @@
 #devtunnel
 #devweb
 tag_class_web
+#tag_class_app
 
 [mvp-frontend:children]
 tag_class_web
 
 [mvp-backend:children]
-tag_class_web
+tag_class_app
 
 [mvp:vars]
 #install_user=ec2-user

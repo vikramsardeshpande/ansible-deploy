@@ -3,7 +3,7 @@
 
 
 connection_protocol: http
-server_http_address: localhost
+server_http_address: PrivateLB-971581836.us-east-1.elb.amazonaws.com 
 server_http_port: 80
 
 banking_rest_api_base_package: banking_rest_api.war

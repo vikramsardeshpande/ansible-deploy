@@ -29,6 +29,10 @@
                interval: 10  
                unhealthy_threshold: 2 
                healthy_threshold: 5
+           stickiness:
+               type: application
+               enabled: yes
+               cookie: SESSIONID
            state: present 
            wait: yes
          register: elb

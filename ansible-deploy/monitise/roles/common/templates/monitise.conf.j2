@@ -1,8 +1,8 @@
 # logging
 LogFormat "%h %l %u %t \"%r\" %>s %b - rt: %T / %D" vhost_common
 
-#<VirtualHost {{ ansible_default_ipv4['address'] }}:80>
-<VirtualHost *:80>
+<VirtualHost {{ ansible_default_ipv4['address'] }}:80>
+#<VirtualHost *:80>
         ServerName {{ ansible_fqdn }}
         ServerAlias {{ ansible_hostname }}
 

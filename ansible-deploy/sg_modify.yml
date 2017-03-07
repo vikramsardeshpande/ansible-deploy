@@ -31,6 +31,14 @@
                from_port: 6100
                to_port: 6100
                cidr_ip: "{{ allowed_ip_1 }}" 
+             - proto: tcp 
+               from_port: 22 
+               to_port: 22 
+               group_name: "{{ prefix }}_sg_web"
+             - proto: tcp 
+               from_port: 22 
+               to_port: 22 
+               group_name: "{{ prefix }}_sg_app"
           # Allow http access from anywhere 
              - proto: tcp 
                from_port: 80 
@@ -78,6 +86,10 @@
                from_port: 22
                to_port: 22
                group_name: "{{ prefix }}_sg_web"
+             - proto: tcp 
+               from_port: 22 
+               to_port: 22 
+               group_name: "{{ prefix }}_sg_app"
              - proto: tcp  
                from_port: 20108
                to_port: 20108

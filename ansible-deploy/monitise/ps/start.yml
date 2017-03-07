@@ -22,7 +22,7 @@
   sudo: yes
   tags: ['csr', 'mweb', 'batchloader', 'enrollment', 'webclient', 'restapi', 'tokenmanager']
 
-- name: start event-relay
-  service: name=event-relay state=started
-  sudo: yes
-  tags: ['event-relay']
+#- name: start event-relay
+#  service: name=event-relay state=started
+#  sudo: yes
+#  tags: ['event-relay']

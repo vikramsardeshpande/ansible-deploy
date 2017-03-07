@@ -22,7 +22,8 @@ lb_name_private: PrivateLB
 # ec2 WEB & APP  instances 
 key: N-virginia-nov-2016
 instance_type: t2.micro
-image: ami-7225cb64
+#image: ami-7225cb64 ( Full product install image_
+image: ami-09d6701f
 environment: staging
 
 

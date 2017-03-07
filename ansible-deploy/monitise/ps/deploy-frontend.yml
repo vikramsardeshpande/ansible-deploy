@@ -15,7 +15,7 @@
 #  - { role: getcorebuild, tags: ['getcorebuild'] }
 #  - { role: getpsbuild, tags: ['getpsbuild'] }
   - { role: mweb, tags: ['mweb'] }
-#  - { role: webclient, tags: ['webclient'] }
+  - { role: webclient, tags: ['webclient'] }
   - { role: restapi, tags: ['restapi'] }
 #  - { role: enrollment, tags: ['enrollment'] }
   post_tasks:
