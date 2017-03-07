@@ -27,6 +27,7 @@
           vpc_subnet_id: "{{ staging_subnet_public }}"
           count: 2 
           assign_public_ip: yes
+          user_data: "{{ lookup('file','clanup_instance.sh') }}"
 #          volumes: 
 #            - device_name: /dev/sda1 
 #              device_type: gp2 
