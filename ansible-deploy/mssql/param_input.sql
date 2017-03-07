@@ -1,8 +1,8 @@
 :setvar oltpuser testoltpuser
-:setvar oltppasswd testoltppass
+:setvar oltppass testoltppass
 :setvar oltpdb clairdb
-:setvar oltpfilepath "D:\RDSDBDATA\DATA"
-:setvar oltplogfilepath "D:\RDSDBDATA\DATA"
+:setvar oltpfilepath /D/RDSDBDATA/DATA
+:setvar oltplogfilepath /D/RDSDBDATA/DATA
 :setvar username mssql_user
 :setvar password mssql_pass
 :setvar db_name master
@@ -37,8 +37,8 @@ ALTER DATABASE [$(oltpdb)] SET AUTO_CLOSE OFF
 ALTER DATABASE [$(oltpdb)] SET AUTO_CREATE_STATISTICS ON 
 ALTER DATABASE [$(oltpdb)] SET AUTO_SHRINK OFF 
 ALTER DATABASE [$(oltpdb)] SET AUTO_UPDATE_STATISTICS ON 
--- ALTER DATABASE [$(oltpdb)] SET CURSOR_CLOSE_ON_COMMIT OFF 
--- ALTER DATABASE [$(oltpdb)] SET CURSOR_DEFAULT  GLOBAL 
+ALTER DATABASE [$(oltpdb)] SET CURSOR_CLOSE_ON_COMMIT OFF 
+ALTER DATABASE [$(oltpdb)] SET CURSOR_DEFAULT  GLOBAL 
 ALTER DATABASE [$(oltpdb)] SET CONCAT_NULL_YIELDS_NULL OFF 
 ALTER DATABASE [$(oltpdb)] SET NUMERIC_ROUNDABORT OFF 
 ALTER DATABASE [$(oltpdb)] SET QUOTED_IDENTIFIER OFF 

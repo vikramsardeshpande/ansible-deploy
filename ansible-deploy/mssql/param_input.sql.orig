@@ -1,0 +1,8 @@
+:setvar oltpuser testoltpuser
+:setvar oltppass testoltppass
+:setvar oltpdb clairdb
+:setvar oltpfilepath /D/RDSDBDATA/DATA
+:setvar oltplogfilepath /D/RDSDBDATA/DATA
+:setvar username mssql_user
+:setvar password mssql_pass
+:setvar db_name master
