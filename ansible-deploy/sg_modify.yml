@@ -28,10 +28,6 @@
                to_port: 22 
                cidr_ip: "{{ allowed_ip_1 }}" 
              - proto: tcp 
-               from_port: 6100
-               to_port: 6100
-               cidr_ip: "{{ allowed_ip_1 }}" 
-             - proto: tcp 
                from_port: 22 
                to_port: 22 
                group_name: "{{ prefix }}_sg_web"
@@ -78,10 +74,6 @@
                from_port: 80
                to_port: 80
                cidr_ip: 0.0.0.0/0 
-             - proto: tcp  
-               from_port: 443
-               to_port: 443
-               group_name: "{{ prefix }}_sg_web"
              - proto: tcp  
                from_port: 22
                to_port: 22
