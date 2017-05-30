@@ -1,7 +1,7 @@
-staging_vpc: vpc-6919550f
-staging_subnet_public_0: subnet-be261793
-staging_subnet_public_1: subnet-5c876614
-staging_subnet_private_0: subnet-b4261799
-staging_subnet_private_1: subnet-5f876617
-staging_subnet_database_0: subnet-b626179b
-staging_subnet_database_1: subnet-5287661a
+staging_vpc: vpc-0903c970
+staging_subnet_public_0: subnet-011bc42d
+staging_subnet_public_1: subnet-2971fa61
+staging_subnet_private_0: subnet-fa1cc3d6
+staging_subnet_private_1: subnet-e57ff4ad
+staging_subnet_database_0: subnet-5f1fc073
+staging_subnet_database_1: subnet-9e73f8d6

@@ -24,12 +24,12 @@
           instance_tags:
             Name: "{{ prefix }}_web"
             class: web 
-            environment: "{{ environment }}" 
+            environment: "{{ environment_stg }}" 
           #id: web_launch_01
           vpc_subnet_id: "{{ staging_subnet_public_0 }}"
 #          user_data: "{{ lookup('file', 'instance_cleanup.sh') }}"
           count: 1 
-          assign_public_ip: yes
+##          assign_public_ip: yes
 #          volumes: 
 #            - device_name: /dev/sda1 
 #              device_type: gp2 

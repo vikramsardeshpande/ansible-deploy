@@ -24,11 +24,11 @@
           instance_tags:
             Name: "{{ prefix }}_app"
             class: app 
-            environment: "{{ environment }}"
+            environment: "{{ environment_stg }}"
           #id: app_launch_01
           vpc_subnet_id: "{{ staging_subnet_private_0 }}"
 #          count: 1 
-          assign_public_ip: yes
+##          assign_public_ip: yes
 #          volumes: 
 #            - device_name: /dev/sda1 
 #              device_type: gp2 

@@ -24,6 +24,6 @@ key: N-virginia-nov-2016
 instance_type: t2.micro
 #image: ami-7225cb64 ( Full product install image_
 image: ami-09d6701f
-environment: staging
+environment_stg: staging
 
 
