@@ -8,6 +8,9 @@
   vars_files:
   - local.yml
   roles:
+  - role: local-setup
+  - role: common
+  - role: tomcat
   - { role: backend, tags: ['backend'] }
 #  - { role: redis, tags: ['redis'] }
   - { role: hornetq, tags: ['hornetq'] }

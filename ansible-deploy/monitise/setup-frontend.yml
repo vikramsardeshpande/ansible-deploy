@@ -2,9 +2,13 @@
 # prepare a frontend system
 
 - hosts: mvp-frontend
-  user: "{{ install_user }}"
-  sudo: yes
+  #user: "{{ install_user }}"
+  #sudo: yes
+  become: yes
   vars_files:
   - local.yml
   roles:
+  - role: local-setup
+  - role: common
+  - role: tomcat
   - role: frontend

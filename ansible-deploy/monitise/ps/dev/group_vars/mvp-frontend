@@ -7,6 +7,9 @@ server_http_address: internal-PrivateLB-131799677.us-east-1.elb.amazonaws.com
  
 server_http_port: 80
 
+# below is for weblcient settings.js
+public_lb_url: publiclb-1221782501.us-east-1.elb.amazonaws.com
+
 banking_rest_api_base_package: banking_rest_api.war
 banking_rest_api_solution_package:
 

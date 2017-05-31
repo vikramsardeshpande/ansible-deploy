@@ -10,3 +10,4 @@ ansible-deploy/*.retry
 .ansible/
 .ssh/
 backup/
+.elinks/

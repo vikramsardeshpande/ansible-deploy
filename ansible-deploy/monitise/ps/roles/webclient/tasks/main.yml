@@ -13,19 +13,22 @@
         chdir={{ monitise_root }}/tomcat/webapps
   when: backup_option and check_path_webclient1.stat.exists
 
-- name: checking webclient solution package exist or not
-  stat: path={{ backup_root }}/PSBuilds/{{ psbuild_number }}/{{ webclient_solution_package }}
-  register: check_path_webclient2
-  when: deploy_solution  
-
-- name: deploy webclient solution status
-  debug: msg="webclient solution package not found"
-  when: deploy_solution and  check_path_webclient2.stat.exists==false
-
-- name: delete webclient and work directory
-  shell: rm -rf {{ monitise_root }}/tomcat/work/Catalina/localhost/webclient {{ monitise_root }}/tomcat/webapps/webclient {{ monitise_root }}/tomcat/webapps/webclient.war 
-  when:  deploy_solution and check_path_webclient2.stat.exists
+#- name: checking webclient solution package exist or not
+#  stat: path={{ backup_root }}/COREBuilds/{{ core_branch }}/{{ core_build }}/{{ webclient_solution_package }}
+#  register: check_path_webclient2
+#  when: deploy_solution  
+#
+#- name: deploy webclient solution status
+#  debug: msg="webclient solution package not found"
+#  when: deploy_solution and  check_path_webclient2.stat.exists==false
+#
+#- name: delete webclient and work directory
+#  shell: rm -rf {{ monitise_root }}/tomcat/work/Catalina/localhost/webclient {{ monitise_root }}/tomcat/webapps/webclient {{ monitise_root }}/tomcat/webapps/webclient.war 
+#  when:  deploy_solution and check_path_webclient2.stat.exists
 
 - name: deploy webclient 
-  shell: cp {{ backup_root }}/PSBuilds/{{ psbuild_number }}/{{ webclient_solution_package }} {{ monitise_root }}/tomcat/webapps
-  when: deploy_solution and check_path_webclient2.stat.exists
+  shell: cp -rp {{ backup_root }}/COREBuilds/{{ core_branch }}/{{ core_build }}/webclient {{ monitise_root }}/tomcat/webapps
+#  when: deploy_solution and check_path_webclient2.stat.exists
+
+- name: generate settings.js file
+  template: src=settings.js.j2 dest={{ monitise_root }}/tomcat/webapps/webclient/js/settings.js  backup=yes
